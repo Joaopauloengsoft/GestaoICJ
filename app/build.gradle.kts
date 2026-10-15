@@ -1,9 +1,11 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
-}
+        alias(libs.plugins.android.application)
+        alias(libs.plugins.kotlin.compose)
+        id("com.google.gms.google-services")
+    }
 
-android {
+
+    android {
     namespace = "com.gestaoicj.app"
     compileSdk {
         version = release(37)
@@ -53,4 +55,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation("androidx.compose.material:material-icons-extended")
+    implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
+    implementation("com.google.firebase:firebase-auth")
+
 }

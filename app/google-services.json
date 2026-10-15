@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "78431663800",
+    "project_id": "gestaoicj",
+    "storage_bucket": "gestaoicj.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:78431663800:android:16e2f3df0d85ef8907264d",
+        "android_client_info": {
+          "package_name": "com.gestaoicj.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGD2tispti4m6n_btWh0KFa2jvyInSaa0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
