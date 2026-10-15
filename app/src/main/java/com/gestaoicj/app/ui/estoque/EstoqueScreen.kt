@@ -50,6 +50,7 @@ import com.gestaoicj.app.R
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
 import com.gestaoicj.app.ui.theme.IcjColors
 import com.gestaoicj.app.ui.theme.Inter
+import com.gestaoicj.app.ui.components.SimboloIcj
 
 data class Produto(
     val id: String,
@@ -116,15 +117,7 @@ private fun Cabecalho() {
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Image(
-            painter = painterResource(R.drawable.logo_icj),
-            contentDescription = "Símbolo do Gestão ICJ",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .align(Alignment.BottomCenter as Alignment.Vertical)
-                .offset(y = (-4).dp)
-                .requiredSize(width = 99.dp, height = 91.dp),
-        )
+        SimboloIcj()
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp),
