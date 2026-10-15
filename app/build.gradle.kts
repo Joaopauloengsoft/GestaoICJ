@@ -1,9 +1,13 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
-}
+        alias(libs.plugins.android.application)
+        alias(libs.plugins.kotlin.compose)
+        id("com.google.gms.google-services")
+        alias(libs.plugins.ksp)
+        id("com.google.dagger.hilt.android")
+        }
 
-android {
+
+    android {
     namespace = "com.gestaoicj.app"
     compileSdk {
         version = release(37)
@@ -37,6 +41,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -53,4 +58,19 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation("androidx.compose.material:material-icons-extended")
+    implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
+    implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    ksp("androidx.room:room-compiler:2.8.4")
+    implementation("com.google.dagger:hilt-android:2.59.2")
+    ksp("com.google.dagger:hilt-compiler:2.59.2")
+
+    implementation("androidx.hilt:hilt-work:1.4.0")
+    ksp("androidx.hilt:hilt-compiler:1.4.0")
+    implementation("androidx.work:work-runtime-ktx:2.11.2")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
 }

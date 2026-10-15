@@ -5,7 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.gestaoicj.app.ui.login.LoginScreen
+import com.gestaoicj.app.navigation.AppNav
+import com.gestaoicj.app.navigation.AppNav
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
 
 class MainActivity : ComponentActivity() {
@@ -17,14 +18,9 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             GestaoIcjTheme {
-                LoginScreen(
-                    onLogin = { email, senha, lembrar -> /* sua lógica */ },
-                    onForgotPassword = {},
-                    onHelp = {},
-                    onPrivacy = {},
-                    onTerms = {},
-                )
+                AppNav()
             }
         }
     }
 }
+

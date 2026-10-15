@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "78431663800",
+    "project_id": "gestaoicj",
+    "storage_bucket": "gestaoicj.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:78431663800:android:16e2f3df0d85ef8907264d",
+        "android_client_info": {
+          "package_name": "com.gestaoicj.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "78431663800-vbk5uk5vmbt04jc8jnrh02lqijfqo8jb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gestaoicj.app",
+            "certificate_hash": "fa75cd65441cc0beaf6c30e3b4a7b2fb532f6b15"
+          }
+        },
+        {
+          "client_id": "78431663800-alr4p7gmojpeq4o04sp62rqapeodud76.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGD2tispti4m6n_btWh0KFa2jvyInSaa0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "78431663800-alr4p7gmojpeq4o04sp62rqapeodud76.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
