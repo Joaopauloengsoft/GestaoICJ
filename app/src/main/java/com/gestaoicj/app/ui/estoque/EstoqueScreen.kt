@@ -1,6 +1,5 @@
-package com.gestaoicj.app.ui.estoque // TROQUE pelo package do seu projeto
+package com.gestaoicj.app.ui.estoque
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,9 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
@@ -34,8 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -46,12 +41,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gestaoicj.app.R
+import com.gestaoicj.app.ui.components.SimboloIcj
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
 import com.gestaoicj.app.ui.theme.IcjColors
 import com.gestaoicj.app.ui.theme.Inter
-import com.gestaoicj.app.ui.components.SimboloIcj
 
+/**
+ * Modelo de dados que representa um produto do estoque.
+ *
+ * @property id Identificador único do produto.
+ * @property nome Nome descritivo do produto.
+ * @property codigo Código ou SKU para identificação no estoque (ex: "ICJ-001").
+ * @property categoria Categoria do produto (ex: "Papelaria", "Copa").
+ * @property saldo Quantidade disponível em estoque.
+ * @property unidade Unidade de medida (ex: "unidades", "resmas", "pacotes").
+ * @property estoqueBaixo Indica se o saldo do produto está abaixo do limite mínimo recomendado.
+ */
 data class Produto(
     val id: String,
     val nome: String,
@@ -63,8 +68,17 @@ data class Produto(
 )
 
 /**
- * @param produtos lista já filtrada pela [busca] (o filtro fica por sua conta, no ViewModel).
- * @param totalCadastrados número exibido em "N cadastrados"; por padrão, o tamanho de [produtos].
+ * Tela principal de Gestão de Estoque do aplicativo ICJ.
+ *
+ * Exibe o cabeçalho com a marca, campo de busca de produtos, listagem dinâmica dos itens cadastrados
+ * com status de saldo e botão para adição/escaneamento de novos produtos no rodapé.
+ *
+ * @param produtos Lista de produtos a serem exibidos (geralmente filtrada pela busca no ViewModel).
+ * @param busca Texto atual do campo de pesquisa de produtos.
+ * @param onBuscaChange Callback acionado quando o texto da busca é alterado pelo usuário.
+ * @param onAdicionarProduto Callback acionado ao clicar no botão de adicionar produto.
+ * @param modifier Modificador de layout aplicado ao contêiner principal da tela.
+ * @param totalCadastrados Quantidade total de produtos cadastrados para exibição no contador.
  */
 @Composable
 fun EstoqueScreen(
@@ -110,6 +124,9 @@ fun EstoqueScreen(
 
 // ───────────────────────── Cabeçalho ─────────────────────────
 
+/**
+ * Cabeçalho da tela de estoque contendo o símbolo da ICJ, o título da seção e uma breve instrução.
+ */
 @Composable
 private fun Cabecalho() {
     Row(
@@ -130,6 +147,12 @@ private fun Cabecalho() {
 
 // ───────────────────────── Busca ─────────────────────────
 
+/**
+ * Campo de entrada de texto estilizado para filtragem de produtos por nome ou código.
+ *
+ * @param valor Texto atualmente digitado no campo de busca.
+ * @param onValorChange Callback acionado sempre que o valor do campo for modificado.
+ */
 @Composable
 private fun CampoBusca(valor: String, onValorChange: (String) -> Unit) {
     val forma = RoundedCornerShape(8.dp)
@@ -178,6 +201,13 @@ private fun CampoBusca(valor: String, onValorChange: (String) -> Unit) {
 
 // ───────────────────────── Lista ─────────────────────────
 
+/**
+ * Seção de listagem dos produtos cadastrados no estoque. Exibe o contador total e a lista rolável.
+ *
+ * @param produtos Lista dos produtos a serem renderizados.
+ * @param totalCadastrados Número total de produtos cadastrados no sistema.
+ * @param modifier Modificador opcional para customização de layout.
+ */
 @Composable
 private fun ListaDeProdutos(
     produtos: List<Produto>,
@@ -216,6 +246,12 @@ private fun ListaDeProdutos(
     }
 }
 
+/**
+ * Item individual da lista que apresenta as informações detalhadas de um [produto].
+ *
+ * @param produto Dados do produto a ser exibido nesta linha.
+ * @param ultimo Indica se este item é o último da lista para controlar a exibição da linha divisória.
+ */
 @Composable
 private fun LinhaDeProduto(produto: Produto, ultimo: Boolean) {
     val destaque = if (produto.estoqueBaixo) IcjColors.Yellow else null
@@ -276,6 +312,11 @@ private fun LinhaDeProduto(produto: Produto, ultimo: Boolean) {
 
 // ───────────────────────── Rodapé ─────────────────────────
 
+/**
+ * Rodapé da tela contendo a ação de adicionar produto via scanner e informações de copyright.
+ *
+ * @param onAdicionarProduto Action executada ao clicar no botão de adicionar/escanear produto.
+ */
 @Composable
 private fun Rodape(onAdicionarProduto: () -> Unit) {
     Column(
@@ -321,6 +362,17 @@ private fun Rodape(onAdicionarProduto: () -> Unit) {
 
 // ───────────────────────── Utilitários ─────────────────────────
 
+/**
+ * Componente utilitário interno para renderização de textos estilizados com a fonte Inter.
+ *
+ * @param text Texto a ser exibido.
+ * @param size Tamanho da fonte ([TextUnit]).
+ * @param weight Peso da fonte ([FontWeight]).
+ * @param color Cor do texto ([Color]).
+ * @param modifier Modificador de layout.
+ * @param maxLines Número máximo de linhas antes de cortar com reticências.
+ * @param align Alinhamento do texto ([TextAlign]).
+ */
 @Composable
 private fun Txt(
     text: String,
@@ -344,6 +396,9 @@ private fun Txt(
     )
 }
 
+/**
+ * Preview da tela [EstoqueScreen] para visualização no Android Studio.
+ */
 @Preview(widthDp = 390, heightDp = 844, showBackground = true, backgroundColor = 0xFF101112)
 @Composable
 private fun EstoqueScreenPreview() {
