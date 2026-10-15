@@ -7,12 +7,15 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "usuarios")
 data class UsuarioEntity(
     @PrimaryKey
-    val id: String,                                   // uid do Firebase Auth
+    val id: String,
 
     val nome: String,
 
     val email: String,
 
+    @ColumnInfo(name = "photo_url")
+    val photoUrl: String? = null,
+
     @ColumnInfo(name = "created_at")
-    val createdAt: Long                               // milissegundos desde 1970
+    val createdAt: Long
 )

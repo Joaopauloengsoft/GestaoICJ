@@ -13,10 +13,15 @@ data class MovimentoComProduto(
 
     val tipo: String,
 
+    val motivo: String?,
+
     val quantidade: Int,
 
     @ColumnInfo(name = "data_hora")
     val dataHora: Long,
 
-    val observacao: String?
+    val observacao: String?,
+
+    @ColumnInfo(name = "usuario_nome")
+    val usuarioNome: String
 )

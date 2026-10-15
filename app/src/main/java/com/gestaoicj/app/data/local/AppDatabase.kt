@@ -15,7 +15,7 @@ import com.gestaoicj.app.data.local.entity.UsuarioEntity
         ProdutoEntity::class,
         MovimentoEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -34,10 +34,16 @@ data class MovimentoEntity(
     @ColumnInfo(name = "produto_id")
     val produtoId: String,
 
+    // QUEM FEZ: id e nome de quem realizou a operação (o nome fica gravado na hora)
     @ColumnInfo(name = "usuario_id")
     val usuarioId: String,
 
-    val tipo: String,                                 // "ENTRADA" ou "SAIDA"
+    @ColumnInfo(name = "usuario_nome")
+    val usuarioNome: String,
+
+    val tipo: String,                     // "ENTRADA" ou "SAIDA"
+
+    val motivo: String? = null,           // "VENDA" ou "RETIRADA" (só quando tipo = SAIDA)
 
     val quantidade: Int,
 

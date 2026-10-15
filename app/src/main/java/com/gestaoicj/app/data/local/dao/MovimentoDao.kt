@@ -19,17 +19,18 @@ interface MovimentoDao {
     @Upsert
     suspend fun salvarTodos(movimentos: List<MovimentoEntity>)
 
-    // Tela Histórico (UC08), com filtros opcionais:
-    //  - tipo = null            -> entradas e saídas
-    //  - inicio = 0, fim = Long.MAX_VALUE -> sem filtro de período
+    // Tela Histórico (UC08). Filtros opcionais:
+    //  tipo = null, motivo = null  -> sem filtro
+    //  inicio = 0, fim = Long.MAX_VALUE -> sem filtro de período
     @Query(
         """
-        SELECT m.id, m.produto_id, p.nome AS produto_nome, m.tipo,
-               m.quantidade, m.data_hora, m.observacao
+        SELECT m.id, m.produto_id, p.nome AS produto_nome, m.tipo, m.motivo,
+               m.quantidade, m.data_hora, m.observacao, m.usuario_nome
         FROM movimentos_estoque m
         INNER JOIN produtos p ON p.id = m.produto_id
-        WHERE m.usuario_id = :uid
+        WHERE p.usuario_id = :uid
           AND (:tipo IS NULL OR m.tipo = :tipo)
+          AND (:motivo IS NULL OR m.motivo = :motivo)
           AND m.data_hora BETWEEN :inicio AND :fim
         ORDER BY m.data_hora DESC
         """
@@ -37,6 +38,7 @@ interface MovimentoDao {
     fun observarHistorico(
         uid: String,
         tipo: String?,
+        motivo: String?,
         inicio: Long,
         fim: Long
     ): Flow<List<MovimentoComProduto>>
