@@ -3,7 +3,7 @@ plugins {
         alias(libs.plugins.kotlin.compose)
         id("com.google.gms.google-services")
         alias(libs.plugins.ksp)
-        id("com.google.dagger.hilt.android")
+        alias(libs.plugins.hilt)
         }
 
 
@@ -65,8 +65,8 @@ dependencies {
     implementation("androidx.room:room-runtime:2.8.4")
     implementation("androidx.room:room-ktx:2.8.4")
     ksp("androidx.room:room-compiler:2.8.4")
-    implementation("com.google.dagger:hilt-android:2.59.2")
-    ksp("com.google.dagger:hilt-compiler:2.59.2")
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
 
     implementation("androidx.hilt:hilt-work:1.4.0")
     ksp("androidx.hilt:hilt-compiler:1.4.0")
