@@ -1,3 +1,4 @@
+
 package com.gestaoicj.app.auth
 
 import androidx.lifecycle.ViewModel
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// Mesmo formato do AuthUiState da aula: carregando, usuário logado e mensagem de erro
 data class AuthUiState(
     val carregando: Boolean = false,
     val logado: Boolean = false,
@@ -29,29 +29,66 @@ class AuthViewModel @Inject constructor(
     private val repo: AuthRepository,
 ) : ViewModel() {
 
-    // O Firebase guarda a sessão: se já havia alguém logado, começa como logado
-    private val _state = MutableStateFlow(AuthUiState(logado = repo.logado))
+    private val _state = MutableStateFlow(
+        AuthUiState(logado = repo.logado)
+    )
+
     val state: StateFlow<AuthUiState> = _state
 
-    // Dados do usuário logado (nome e e-mail), lidos do Room
     @OptIn(ExperimentalCoroutinesApi::class)
     val usuario: StateFlow<UsuarioEntity?> = repo.uidFlow
-        .flatMapLatest { uid -> if (uid == null) flowOf(null) else repo.observarUsuario(uid) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .flatMapLatest { uid ->
+            if (uid == null) {
+                flowOf(null)
+            } else {
+                repo.observarUsuario(uid)
+            }
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            null
+        )
 
     fun entrar(email: String, senha: String) {
         if (_state.value.carregando) return
-        _state.update { it.copy(carregando = true, erro = null) }
+
+        _state.update {
+            it.copy(carregando = true, erro = null)
+        }
 
         viewModelScope.launch {
             val resultado = repo.entrar(email, senha)
-            if (resultado.isSuccess) {
-                _state.update { it.copy(carregando = false, logado = true, erro = null) }
-            } else {
-                val mensagem = resultado.exceptionOrNull()?.mensagemAmigavel()
-                _state.update { it.copy(carregando = false, logado = false, erro = mensagem) }
-            }
+
+            resultado.fold(
+                onSuccess = {
+                    _state.update {
+                        it.copy(
+                            carregando = false,
+                            logado = true,
+                            erro = null
+                        )
+                    }
+                },
+                onFailure = { exception ->
+                    _state.update {
+                        it.copy(
+                            carregando = false,
+                            logado = false,
+                            erro = exception.mensagemAmigavel()
+                        )
+                    }
+                }
+            )
         }
+    }
+
+    /**
+     * Retorna o resultado ao chamador para que a tela
+     * possa exibir uma mensagem de sucesso ou erro.
+     */
+    suspend fun recuperarSenha(email: String): Result<Unit> {
+        return repo.recuperarSenha(email)
     }
 
     fun sair() {

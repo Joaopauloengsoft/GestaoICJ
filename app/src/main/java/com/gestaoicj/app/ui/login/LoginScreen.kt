@@ -72,22 +72,23 @@ import com.gestaoicj.app.R // TROQUE pelo R do seu projeto
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
 import com.gestaoicj.app.ui.theme.IcjColors
 import com.gestaoicj.app.ui.theme.Inter
-import androidx.compose.material3.CircularProgressIndicator
 
 // Largura aproximada do título "Gestão ICJ" a 48sp, medida no frame de 390dp.
 private const val TitleWidthAt48Sp = 251f
 
+
 @Composable
 fun LoginScreen(
-    onLogin: (email: String, password: String, remember: Boolean) -> Unit,
-    onForgotPassword: () -> Unit,
+    onLogin: (email: String, senha: String, lembrar: Boolean) -> Unit,
+    onForgotPassword: (email: String) -> Unit,
     onHelp: () -> Unit,
     onPrivacy: () -> Unit,
     onTerms: () -> Unit,
     modifier: Modifier = Modifier,
     erro: String? = null,
-    carregando: Boolean = false,
+    carregando: Boolean = false
 ) {
+
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var showPassword by rememberSaveable { mutableStateOf(false) }
@@ -190,23 +191,12 @@ fun LoginScreen(
                                 AccessPreferences(
                                     remember = remember,
                                     onRememberChange = { remember = it },
-                                    onForgotPassword = onForgotPassword,
+                                    onForgotPassword = {
+                                        onForgotPassword(email)
+                                    },
                                 )
 
-                                if (erro != null) {
-                                    Text(
-                                        text = erro,
-                                        color = IcjColors.Error,
-                                        fontFamily = Inter,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 13.sp,
-                                    )
-                                }
-
-                                EnterButton(
-                                    carregando = carregando,
-                                    onClick = { onLogin(email, password, remember) },
-                                )
+                                EnterButton(onClick = { onLogin(email, password, remember) })
                             }
 
                             AccessHelp(onHelp = onHelp)
@@ -459,25 +449,17 @@ private fun AccessPreferences(
 }
 
 @Composable
-private fun EnterButton(carregando: Boolean, onClick: () -> Unit) {
+private fun EnterButton(onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(IcjColors.Yellow)
-            .clickable(enabled = !carregando, role = Role.Button, onClick = onClick),
+            .clickable(role = Role.Button, onClick = onClick),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (carregando) {
-            CircularProgressIndicator(
-                color = IcjColors.OnYellow,
-                strokeWidth = 2.dp,
-                modifier = Modifier.size(20.dp),
-            )
-            return@Row
-        }
         Text(
             text = "Entrar",
             color = IcjColors.OnYellow,
