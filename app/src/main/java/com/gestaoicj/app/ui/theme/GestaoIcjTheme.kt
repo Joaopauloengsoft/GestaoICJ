@@ -20,6 +20,7 @@ object IcjColors {
     val TextPrimary = Color(0xFFF5F5F2)
     val TextSecondary = Color(0xFFA8AAAC)
     val TextMuted = Color(0xFF74777A)       // placeholder, copyright, separador
+    val Error = Color(0xFFFF8A80)           // mensagens de erro (não existe no design original)
 }
 
 /**

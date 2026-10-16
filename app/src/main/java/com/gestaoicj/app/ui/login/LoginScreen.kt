@@ -72,6 +72,7 @@ import com.gestaoicj.app.R // TROQUE pelo R do seu projeto
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
 import com.gestaoicj.app.ui.theme.IcjColors
 import com.gestaoicj.app.ui.theme.Inter
+import androidx.compose.material3.CircularProgressIndicator
 
 // Largura aproximada do título "Gestão ICJ" a 48sp, medida no frame de 390dp.
 private const val TitleWidthAt48Sp = 251f
@@ -84,6 +85,8 @@ fun LoginScreen(
     onPrivacy: () -> Unit,
     onTerms: () -> Unit,
     modifier: Modifier = Modifier,
+    erro: String? = null,
+    carregando: Boolean = false,
 ) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -190,7 +193,20 @@ fun LoginScreen(
                                     onForgotPassword = onForgotPassword,
                                 )
 
-                                EnterButton(onClick = { onLogin(email, password, remember) })
+                                if (erro != null) {
+                                    Text(
+                                        text = erro,
+                                        color = IcjColors.Error,
+                                        fontFamily = Inter,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 13.sp,
+                                    )
+                                }
+
+                                EnterButton(
+                                    carregando = carregando,
+                                    onClick = { onLogin(email, password, remember) },
+                                )
                             }
 
                             AccessHelp(onHelp = onHelp)
@@ -443,17 +459,25 @@ private fun AccessPreferences(
 }
 
 @Composable
-private fun EnterButton(onClick: () -> Unit) {
+private fun EnterButton(carregando: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(IcjColors.Yellow)
-            .clickable(role = Role.Button, onClick = onClick),
+            .clickable(enabled = !carregando, role = Role.Button, onClick = onClick),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (carregando) {
+            CircularProgressIndicator(
+                color = IcjColors.OnYellow,
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(20.dp),
+            )
+            return@Row
+        }
         Text(
             text = "Entrar",
             color = IcjColors.OnYellow,

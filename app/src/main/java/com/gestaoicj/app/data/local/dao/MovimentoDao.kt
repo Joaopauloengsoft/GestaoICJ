@@ -24,7 +24,7 @@ interface MovimentoDao {
     //  inicio = 0, fim = Long.MAX_VALUE -> sem filtro de período
     @Query(
         """
-        SELECT m.id, m.produto_id, p.nome AS produto_nome, m.tipo, m.motivo,
+        SELECT m.id, m.produto_id, p.nome AS produto_nome, p.unidade AS produto_unidade, m.tipo, m.motivo,
                m.quantidade, m.data_hora, m.observacao, m.usuario_nome
         FROM movimentos_estoque m
         INNER JOIN produtos p ON p.id = m.produto_id

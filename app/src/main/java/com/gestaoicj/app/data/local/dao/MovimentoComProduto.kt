@@ -11,6 +11,9 @@ data class MovimentoComProduto(
     @ColumnInfo(name = "produto_nome")
     val produtoNome: String,
 
+    @ColumnInfo(name = "produto_unidade")
+    val produtoUnidade: String,
+
     val tipo: String,
 
     val motivo: String?,

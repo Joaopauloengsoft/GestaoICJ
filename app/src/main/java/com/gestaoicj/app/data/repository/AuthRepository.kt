@@ -10,6 +10,10 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 class AuthRepository @Inject constructor(
     private val auth: FirebaseAuth,
@@ -25,6 +29,16 @@ class AuthRepository @Inject constructor(
     // O Firebase guarda a sessão: ao reabrir o app, continua logado.
     // A tela inicial usa isto para decidir entre Login e Estoque.
     val logado: Boolean get() = auth.currentUser != null
+
+    // Avisa as telas quando o usuário entra ou sai (uid = null quando ninguém está logado)
+    val uidFlow: Flow<String?> = callbackFlow {
+        val ouvinte = FirebaseAuth.AuthStateListener { trySend(it.currentUser?.uid) }
+        auth.addAuthStateListener(ouvinte)      // já emite o estado atual ao registrar
+        awaitClose { auth.removeAuthStateListener(ouvinte) }
+    }.distinctUntilChanged()
+
+    // Dados do usuário no Room (nome e e-mail para a tela de perfil)
+    fun observarUsuario(uid: String): Flow<UsuarioEntity?> = usuarioDao.observar(uid)
 
     // UC01 - Cadastrar conta (exige internet)
     suspend fun cadastrar(nome: String, email: String, senha: String): Result<Unit> = resultado {
@@ -76,6 +90,7 @@ class AuthRepository @Inject constructor(
             Log.w("AuthRepository", "Falha ao baixar dados após o login", e)
         }
         scheduler.agendar()      // envia o que ficou pendente
+        scheduler.iniciarPeriodico()   // rede de segurança a cada 6 h (idempotente: KEEP)
     }
 
     // UC11 - Recuperar senha
