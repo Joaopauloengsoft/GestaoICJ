@@ -1,58 +1,95 @@
 package com.gestaoicj.app.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+
+// Mapeamento dos tokens do design para papéis do Material:
+//   amarelo → primary · texto sobre amarelo → onPrimary
+//   fundo → background/surface · texto → onBackground/onSurface
+//   texto secundário → onSurfaceVariant · campos/cartões → surfaceVariant
+//   barra inferior → surfaceContainer · bordas → outline · erro → error
+// Papéis não listados mantêm o padrão do Material (não são usados hoje).
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = IcjYellow,
+    onPrimary = IcjOnYellow,
+    background = DarkBackground,
+    onBackground = DarkTextPrimary,
+    surface = DarkBackground,
+    onSurface = DarkTextPrimary,
+    surfaceVariant = DarkField,
+    onSurfaceVariant = DarkTextSecondary,
+    surfaceContainer = DarkBackgroundEnd,
+    outline = DarkBorder,
+    outlineVariant = DarkBorder,
+    error = DarkError,
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = IcjYellow,
+    onPrimary = IcjOnYellow,
+    background = LightBackground,
+    onBackground = LightTextPrimary,
+    surface = LightBackground,
+    onSurface = LightTextPrimary,
+    surfaceVariant = LightField,
+    onSurfaceVariant = LightTextSecondary,
+    surfaceContainer = LightBackgroundEnd,
+    outline = LightBorder,
+    outlineVariant = LightBorder,
+    error = LightError,
 )
 
-@Composable
-fun GestaoICJTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+private val LocalIcjExtraColors = staticCompositionLocalOf { DarkExtraColors }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+/** Cores que não existem no ColorScheme: `MaterialTheme.extraColors.textMuted`, etc. */
+val MaterialTheme.extraColors: IcjExtraColors
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalIcjExtraColors.current
+
+/**
+ * Tema do Gestão ICJ. Segue o modo do sistema por padrão.
+ *
+ * Não usa cor dinâmica (Material You) de propósito: ela trocaria o amarelo da
+ * marca pela cor do papel de parede do usuário.
+ */
+@Composable
+fun GestaoIcjTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit,
+) {
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val extraColors = if (darkTheme) DarkExtraColors else LightExtraColors
+
+    // Ícones da barra de status/navegação: escuros no tema claro, claros no escuro.
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
+        }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(LocalIcjExtraColors provides extraColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = IcjTypography,
+            shapes = IcjShapes,
+            content = content,
+        )
+    }
 }

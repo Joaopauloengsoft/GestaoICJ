@@ -38,6 +38,7 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,7 +73,6 @@ import com.gestaoicj.app.R // TROQUE pelo R do seu projeto
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
 import com.gestaoicj.app.ui.theme.IcjColors
 import com.gestaoicj.app.ui.theme.Inter
-import androidx.compose.material3.CircularProgressIndicator
 
 // Largura aproximada do título "Gestão ICJ" a 48sp, medida no frame de 390dp.
 private const val TitleWidthAt48Sp = 251f

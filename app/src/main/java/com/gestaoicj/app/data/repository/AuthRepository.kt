@@ -7,13 +7,13 @@ import com.gestaoicj.app.data.remote.FirestoreDataSource
 import com.gestaoicj.app.data.remote.toUsuarioEntity
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 class AuthRepository @Inject constructor(
     private val auth: FirebaseAuth,

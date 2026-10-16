@@ -17,34 +17,29 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.gestaoicj.app.ui.components.SimboloIcj
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
-import com.gestaoicj.app.ui.theme.IcjColors
-import com.gestaoicj.app.ui.theme.Inter
+import com.gestaoicj.app.ui.theme.extraColors
 
 /**
  * Modelo de dados que representa um produto do estoque.
@@ -73,6 +68,12 @@ data class Produto(
  * Exibe o cabeçalho com a marca, campo de busca de produtos, listagem dinâmica dos itens cadastrados
  * com status de saldo e botão para adição/escaneamento de novos produtos no rodapé.
  *
+ * É "stateless": só desenha o que recebe e avisa o que o usuário fez (state hoisting).
+ * Quem guarda e observa o estado é o `EstoqueViewModel`, ligado em `AppNav`.
+ *
+ * Cores, fontes e cantos vêm todos do tema (`MaterialTheme`), então a tela
+ * acompanha o modo claro/escuro sem nenhum `if` aqui dentro.
+ *
  * @param produtos Lista de produtos a serem exibidos (geralmente filtrada pela busca no ViewModel).
  * @param busca Texto atual do campo de pesquisa de produtos.
  * @param onBuscaChange Callback acionado quando o texto da busca é alterado pelo usuário.
@@ -92,7 +93,7 @@ fun EstoqueScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(IcjColors.Background)
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(24.dp),
@@ -139,8 +140,16 @@ private fun Cabecalho() {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Txt("Estoque", 24.sp, FontWeight.SemiBold, IcjColors.TextPrimary)
-            Txt("Consulte e adicione produtos ao estoque.", 12.sp, FontWeight.Medium, IcjColors.TextSecondary)
+            Text(
+                text = "Estoque",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                text = "Consulte e adicione produtos ao estoque.",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -155,15 +164,16 @@ private fun Cabecalho() {
  */
 @Composable
 private fun CampoBusca(valor: String, onValorChange: (String) -> Unit) {
-    val forma = RoundedCornerShape(8.dp)
+    val forma = MaterialTheme.shapes.medium
+    val cores = MaterialTheme.colorScheme
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp)
             .clip(forma)
-            .background(IcjColors.Field)
-            .border(1.dp, IcjColors.Border, forma)
+            .background(cores.surfaceVariant)
+            .border(1.dp, cores.outline, forma)
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -171,26 +181,33 @@ private fun CampoBusca(valor: String, onValorChange: (String) -> Unit) {
         Icon(
             imageVector = Icons.Outlined.Search,
             contentDescription = null,
-            tint = IcjColors.TextSecondary,
+            tint = cores.onSurfaceVariant,
             modifier = Modifier.size(20.dp),
         )
         BasicTextField(
             value = valor,
             onValueChange = onValorChange,
             singleLine = true,
-            textStyle = TextStyle(
-                color = IcjColors.TextPrimary,
-                fontFamily = Inter,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
+            // O texto digitado nunca teve altura de linha/espaçamento do bodyLarge;
+            // zerar aqui mantém o campo idêntico ao original.
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                color = cores.onBackground,
+                lineHeight = TextUnit.Unspecified,
+                letterSpacing = TextUnit.Unspecified,
             ),
-            cursorBrush = SolidColor(IcjColors.Yellow),
+            cursorBrush = SolidColor(MaterialTheme.extraColors.accent),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             modifier = Modifier.weight(1f),
             decorationBox = { campo ->
                 Box(contentAlignment = Alignment.CenterStart) {
                     if (valor.isEmpty()) {
-                        Txt("Buscar produto ou código", 14.sp, FontWeight.Normal, IcjColors.TextMuted, maxLines = 1)
+                        Text(
+                            text = "Buscar produto ou código",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.extraColors.textMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                     campo()
                 }
@@ -214,7 +231,8 @@ private fun ListaDeProdutos(
     totalCadastrados: Int,
     modifier: Modifier = Modifier,
 ) {
-    val forma = RoundedCornerShape(8.dp)
+    val forma = MaterialTheme.shapes.medium
+    val cores = MaterialTheme.colorScheme
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
@@ -222,12 +240,15 @@ private fun ListaDeProdutos(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Txt("Produtos", 14.sp, FontWeight.Medium, IcjColors.TextPrimary)
-            Txt(
+            Text(
+                text = "Produtos",
+                style = MaterialTheme.typography.titleSmall,
+                color = cores.onBackground,
+            )
+            Text(
                 text = if (totalCadastrados == 1) "1 cadastrado" else "$totalCadastrados cadastrados",
-                size = 13.sp,
-                weight = FontWeight.Normal,
-                color = IcjColors.TextSecondary,
+                style = MaterialTheme.typography.bodySmall,
+                color = cores.onSurfaceVariant,
             )
         }
 
@@ -236,8 +257,8 @@ private fun ListaDeProdutos(
             modifier = Modifier
                 .weight(1f, fill = false)
                 .clip(forma)
-                .background(IcjColors.Field)
-                .border(1.dp, IcjColors.Border, forma),
+                .background(cores.surfaceVariant)
+                .border(1.dp, cores.outline, forma),
         ) {
             itemsIndexed(produtos, key = { _, produto -> produto.id }) { indice, produto ->
                 LinhaDeProduto(produto, ultimo = indice == produtos.lastIndex)
@@ -254,7 +275,9 @@ private fun ListaDeProdutos(
  */
 @Composable
 private fun LinhaDeProduto(produto: Produto, ultimo: Boolean) {
-    val destaque = if (produto.estoqueBaixo) IcjColors.Yellow else null
+    val cores = MaterialTheme.colorScheme
+    // "Estoque baixo" usa o amarelo como TEXTO: no claro vira âmbar escuro (legível).
+    val destaque = if (produto.estoqueBaixo) MaterialTheme.extraColors.accent else null
 
     Box(
         modifier = Modifier
@@ -272,13 +295,19 @@ private fun LinhaDeProduto(produto: Produto, ultimo: Boolean) {
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Txt(produto.nome, 14.sp, FontWeight.Medium, IcjColors.TextPrimary, maxLines = 1)
-                Txt(
-                    text = "${produto.codigo} · ${if (produto.estoqueBaixo) "Estoque baixo" else produto.categoria}",
-                    size = 11.sp,
-                    weight = FontWeight.Normal,
-                    color = destaque ?: IcjColors.TextSecondary,
+                Text(
+                    text = produto.nome,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = cores.onBackground,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = "${produto.codigo} · ${if (produto.estoqueBaixo) "Estoque baixo" else produto.categoria}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = destaque ?: cores.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             // 62dp no design; widthIn deixa crescer se o saldo tiver mais dígitos.
@@ -287,14 +316,20 @@ private fun LinhaDeProduto(produto: Produto, ultimo: Boolean) {
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                Txt(
+                Text(
                     text = produto.saldo.toString(),
-                    size = 18.sp,
-                    weight = FontWeight.SemiBold,
-                    color = destaque ?: IcjColors.TextPrimary,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = destaque ?: cores.onBackground,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                Txt(produto.unidade, 11.sp, FontWeight.Normal, IcjColors.TextSecondary, maxLines = 1)
+                Text(
+                    text = produto.unidade,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = cores.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
 
@@ -304,7 +339,7 @@ private fun LinhaDeProduto(produto: Produto, ultimo: Boolean) {
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(IcjColors.Border),
+                    .background(cores.outline),
             )
         }
     }
@@ -319,6 +354,8 @@ private fun LinhaDeProduto(produto: Produto, ultimo: Boolean) {
  */
 @Composable
 private fun Rodape(onAdicionarProduto: () -> Unit) {
+    val cores = MaterialTheme.colorScheme
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -329,91 +366,72 @@ private fun Rodape(onAdicionarProduto: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Txt("Adicionar produto", 14.sp, FontWeight.Medium, IcjColors.TextPrimary)
-                Txt("Escaneie o código de barras", 13.sp, FontWeight.Normal, IcjColors.TextSecondary)
+                Text(
+                    text = "Adicionar produto",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = cores.onBackground,
+                )
+                Text(
+                    text = "Escaneie o código de barras",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = cores.onSurfaceVariant,
+                )
             }
             Box(
                 modifier = Modifier
                     .size(56.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(IcjColors.Yellow)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(cores.primary)
                     .clickable(role = Role.Button, onClick = onAdicionarProduto),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Add,
                     contentDescription = "Adicionar produto escaneando o código de barras",
-                    tint = IcjColors.OnYellow,
+                    tint = cores.onPrimary,
                     modifier = Modifier.size(26.dp),
                 )
             }
         }
 
-        Txt(
+        Text(
             text = "© 2026 Gestão ICJ. Todos os direitos reservados.",
-            size = 11.sp,
-            weight = FontWeight.Normal,
-            color = IcjColors.TextMuted,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.extraColors.textMuted,
+            textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
-            align = TextAlign.Center,
         )
     }
 }
 
-// ───────────────────────── Utilitários ─────────────────────────
+// ───────────────────────── Previews ─────────────────────────
 
-/**
- * Componente utilitário interno para renderização de textos estilizados com a fonte Inter.
- *
- * @param text Texto a ser exibido.
- * @param size Tamanho da fonte ([TextUnit]).
- * @param weight Peso da fonte ([FontWeight]).
- * @param color Cor do texto ([Color]).
- * @param modifier Modificador de layout.
- * @param maxLines Número máximo de linhas antes de cortar com reticências.
- * @param align Alinhamento do texto ([TextAlign]).
- */
-@Composable
-private fun Txt(
-    text: String,
-    size: TextUnit,
-    weight: FontWeight,
-    color: Color,
-    modifier: Modifier = Modifier,
-    maxLines: Int = Int.MAX_VALUE,
-    align: TextAlign = TextAlign.Unspecified,
-) {
-    Text(
-        text = text,
-        color = color,
-        fontFamily = Inter,
-        fontWeight = weight,
-        fontSize = size,
-        maxLines = maxLines,
-        overflow = TextOverflow.Ellipsis,
-        textAlign = align,
-        modifier = modifier,
-    )
-}
+private val produtosDeExemplo = listOf(
+    Produto("1", "Papel A4", "ICJ-001", "Papelaria", 24, "resmas"),
+    Produto("2", "Caneta esferográfica", "ICJ-002", "Papelaria", 120, "unidades"),
+    Produto("3", "Álcool em gel 500 ml", "ICJ-003", "Papelaria", 4, "unidades", estoqueBaixo = true),
+    Produto("4", "Café em pó 500 g", "ICJ-004", "Copa", 18, "pacotes"),
+    Produto("5", "Copo descartável 200 ml", "ICJ-005", "Copa", 32, "pacotes"),
+)
 
-/**
- * Preview da tela [EstoqueScreen] para visualização no Android Studio.
- */
-@Preview(widthDp = 390, heightDp = 844, showBackground = true, backgroundColor = 0xFF101112)
 @Composable
-private fun EstoqueScreenPreview() {
-    GestaoIcjTheme {
+private fun EstoqueScreenPreview(darkTheme: Boolean) {
+    GestaoIcjTheme(darkTheme = darkTheme) {
         EstoqueScreen(
-            produtos = listOf(
-                Produto("1", "Papel A4", "ICJ-001", "Papelaria", 24, "resmas"),
-                Produto("2", "Caneta esferográfica", "ICJ-002", "Papelaria", 120, "unidades"),
-                Produto("3", "Álcool em gel 500 ml", "ICJ-003", "Papelaria", 4, "unidades", estoqueBaixo = true),
-                Produto("4", "Café em pó 500 g", "ICJ-004", "Copa", 18, "pacotes"),
-                Produto("5", "Copo descartável 200 ml", "ICJ-005", "Copa", 32, "pacotes"),
-            ),
+            produtos = produtosDeExemplo,
             busca = "",
             onBuscaChange = {},
             onAdicionarProduto = {},
         )
     }
 }
+
+/** Preview da tela [EstoqueScreen] no tema escuro (o design original do Figma). */
+@Preview(name = "Escuro", widthDp = 390, heightDp = 844, showBackground = true)
+@Composable
+private fun EstoqueScreenEscuroPreview() = EstoqueScreenPreview(darkTheme = true)
+
+/** Preview da tela [EstoqueScreen] no tema claro. */
+@Preview(name = "Claro", widthDp = 390, heightDp = 844, showBackground = true)
+@Composable
+private fun EstoqueScreenClaroPreview() = EstoqueScreenPreview(darkTheme = false)
