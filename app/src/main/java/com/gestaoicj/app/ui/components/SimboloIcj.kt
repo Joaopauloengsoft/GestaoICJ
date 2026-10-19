@@ -3,17 +3,13 @@ package com.gestaoicj.app.ui.components // TROQUE pelo package do seu projeto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.gestaoicj.app.ui.theme.IcjColors
-import com.gestaoicj.app.ui.theme.Inter
 
 /**
  * Símbolo 48×48 usado no cabeçalho das telas internas.
@@ -25,16 +21,14 @@ fun SimboloIcj(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .size(48.dp)
-            .clip(RoundedCornerShape(6.dp))
-            .background(IcjColors.Yellow),
+            .clip(MaterialTheme.shapes.small)
+            .background(MaterialTheme.colorScheme.primary),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = "ICJ",
-            color = IcjColors.OnYellow,
-            fontFamily = Inter,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.titleMedium,
         )
 
         // Image(

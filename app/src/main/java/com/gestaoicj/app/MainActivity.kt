@@ -14,12 +14,17 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Barras transparentes; a cor dos ícones acompanha o tema (ver GestaoIcjTheme).
+        val transparente = android.graphics.Color.TRANSPARENT
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            statusBarStyle = SystemBarStyle.auto(transparente, transparente),
+            navigationBarStyle = SystemBarStyle.auto(transparente, transparente),
         )
         setContent {
-            GestaoIcjTheme {
+            // TODO(migração): Login, Reposição, Histórico e Perfil ainda usam cores escuras
+            // fixas (IcjColors). Até migrarem, o app fica travado no escuro, como era antes.
+            // Depois, apague `darkTheme = true` para seguir o modo do sistema.
+            GestaoIcjTheme(darkTheme = true) {
                 AppNav()
             }
         }

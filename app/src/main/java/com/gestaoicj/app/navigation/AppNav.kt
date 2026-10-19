@@ -5,10 +5,10 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,6 +17,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -36,8 +37,6 @@ import com.gestaoicj.app.ui.perfil.MeusDadosScreen
 import com.gestaoicj.app.ui.perfil.Perfil
 import com.gestaoicj.app.ui.reposicao.ProdutoParaRepor
 import com.gestaoicj.app.ui.reposicao.ReposicaoScreen
-import com.gestaoicj.app.ui.theme.IcjColors
-import kotlinx.coroutines.launch
 
 @Composable
 fun AppNav(
@@ -45,9 +44,7 @@ fun AppNav(
     estoqueVm: EstoqueViewModel = viewModel()
 ) {
     val nav = rememberNavController()
-    val auth by authVm.state.collectAsState()
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val auth by authVm.state.collectAsStateWithLifecycle()
 
     val backStackEntry by nav.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -57,7 +54,8 @@ fun AppNav(
     }
 
     Scaffold(
-        containerColor = IcjColors.Background,
+        containerColor = MaterialTheme.colorScheme.background,
+        // As telas já aplicam statusBarsPadding/navigationBarsPadding, então o Scaffold não soma de novo.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (mostrarBarra) {
@@ -127,15 +125,9 @@ fun AppNav(
             }
 
             composable(Screen.Estoque.route) {
-                var busca by rememberSaveable {
-                    mutableStateOf("")
-                }
-
-                val filtrados = produtosExemplo.filter {
-                    it.nome.contains(busca, ignoreCase = true) ||
-                            it.codigo.contains(busca, ignoreCase = true)
-                }
-
+                val produtos by estoqueVm.produtos.collectAsStateWithLifecycle()
+                val busca by estoqueVm.busca.collectAsStateWithLifecycle()
+                val total by estoqueVm.totalCadastrados.collectAsStateWithLifecycle()
                 EstoqueScreen(
                     produtos = filtrados,
                     busca = busca,
@@ -146,26 +138,13 @@ fun AppNav(
             }
 
             composable(Screen.Reposicao.route) {
-                ReposicaoScreen(
-                    produtos = reposicaoExemplo
-                )
+                val produtos by estoqueVm.reposicao.collectAsStateWithLifecycle()
+                ReposicaoScreen(produtos = produtos)
             }
 
             composable(Screen.Historico.route) {
-                var filtro by remember {
-                    mutableStateOf(FiltroMovimentacao.Todas)
-                }
-
-                val filtradas = movimentacoesExemplo.filter {
-                    when (filtro) {
-                        FiltroMovimentacao.Todas -> true
-                        FiltroMovimentacao.Entradas ->
-                            it.tipo == TipoMovimentacao.Entrada
-                        FiltroMovimentacao.Saidas ->
-                            it.tipo == TipoMovimentacao.Saida
-                    }
-                }
-
+                val movimentacoes by estoqueVm.movimentacoes.collectAsStateWithLifecycle()
+                val filtro by estoqueVm.filtro.collectAsStateWithLifecycle()
                 HistoricoEstoqueScreen(
                     movimentacoes = filtradas,
                     filtro = filtro,
@@ -177,6 +156,7 @@ fun AppNav(
             }
 
             composable(Screen.Perfil.route) {
+                val usuario by authVm.usuario.collectAsStateWithLifecycle()
                 MeusDadosScreen(
                     perfil = perfilExemplo,
                     onSair = {
