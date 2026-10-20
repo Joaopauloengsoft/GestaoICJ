@@ -1,4 +1,4 @@
-package com.gestaoicj.app.ui.perfil // TROQUE pelo package do seu projeto
+package com.gestaoicj.app.ui.perfil
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,31 +18,26 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gestaoicj.app.ui.components.RodapeCopyright
+import com.gestaoicj.app.ui.components.SimboloIcj
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
-import com.gestaoicj.app.ui.theme.IcjColors
-import com.gestaoicj.app.ui.theme.Inter
-
-// Borda do botão "Sair" (#3F4144): é mais clara que IcjColors.Border e só aparece nesta tela.
-private val BordaSair = Color(0xFF3F4144)
+import com.gestaoicj.app.ui.theme.extraColors
 
 data class Perfil(
     val nome: String,
@@ -61,7 +56,7 @@ fun MeusDadosScreen(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(IcjColors.Background),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         val alturaTela = maxHeight
 
@@ -92,8 +87,6 @@ fun MeusDadosScreen(
     }
 }
 
-// ───────────────────────── Cabeçalho ─────────────────────────
-
 @Composable
 private fun Cabecalho() {
     Row(
@@ -106,83 +99,64 @@ private fun Cabecalho() {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Txt("Gestão ICJ", 24.sp, FontWeight.SemiBold, IcjColors.TextPrimary)
-            Txt("PLATAFORMA DE GESTÃO", 10.sp, FontWeight.Medium, IcjColors.TextSecondary)
+            Text(
+                text = "Gestão ICJ",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                text = "PLATAFORMA DE GESTÃO",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
 
-/**
- * Símbolo 48×48. Por enquanto mostra "ICJ" como provisório.
- * Quando adicionar res/drawable/logo_icj, troque o Text pelo Image comentado abaixo.
- */
-@Composable
-private fun SimboloIcj() {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(RoundedCornerShape(6.dp))
-            .background(IcjColors.Yellow),
-        contentAlignment = Alignment.Center,
-    ) {
-        Txt("ICJ", 16.sp, FontWeight.SemiBold, IcjColors.OnYellow)
-
-        // Image(
-        //     painter = painterResource(R.drawable.logo_icj),
-        //     contentDescription = "Símbolo do Gestão ICJ",
-        //     contentScale = ContentScale.Crop,
-        //     modifier = Modifier
-        //         .align(Alignment.BottomCenter)
-        //         .offset(y = (-4).dp)
-        //         .requiredSize(width = 46.dp, height = 42.dp),
-        // )
-    }
-}
-
-// ───────────────────────── Dados pessoais ─────────────────────────
-
 @Composable
 private fun DadosPessoais(perfil: Perfil) {
+    val tipografia = MaterialTheme.typography
+    val cores = MaterialTheme.colorScheme
+
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Txt(
+            Text(
                 text = "Meus Dados",
-                size = 28.sp,
-                weight = FontWeight.SemiBold,
-                color = IcjColors.TextPrimary,
-                lineHeight = 33.6.sp, // 1.2 × 28
+                style = tipografia.headlineMedium.copy(lineHeight = 33.6.sp),
+                color = cores.onBackground,
             )
-            Txt(
+            Text(
                 text = "Confira seu perfil e gerencie seu acesso.",
-                size = 14.sp,
-                weight = FontWeight.Normal,
-                color = IcjColors.TextSecondary,
-                lineHeight = 22.4.sp, // 1.6 × 14
+                style = tipografia.bodyMedium.copy(lineHeight = 22.4.sp),
+                color = cores.onSurfaceVariant,
             )
         }
 
         CartaoPerfil(perfil)
 
-        Txt(
+        Text(
             text = "Para atualizar seus dados, fale com o administrador da sua organização.",
-            size = 13.sp,
-            weight = FontWeight.Normal,
-            color = IcjColors.TextSecondary,
-            lineHeight = 19.5.sp, // 1.5 × 13
+            style = tipografia.bodySmall.copy(lineHeight = 19.5.sp),
+            color = cores.onSurfaceVariant,
         )
     }
 }
 
 @Composable
 private fun CartaoPerfil(perfil: Perfil) {
-    val forma = RoundedCornerShape(8.dp)
+    val forma = MaterialTheme.shapes.medium
+    val cores = MaterialTheme.colorScheme
+    val tipografia = MaterialTheme.typography
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(forma)
-            .background(IcjColors.Field)
-            .border(1.dp, IcjColors.Border, forma)
+            .background(cores.surfaceVariant)
+            .border(1.dp, cores.outline, forma)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
@@ -195,28 +169,28 @@ private fun CartaoPerfil(perfil: Perfil) {
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(IcjColors.Yellow),
+                    .background(cores.primary),
                 contentAlignment = Alignment.Center,
             ) {
-                Txt(iniciais(perfil.nome), 18.sp, FontWeight.SemiBold, IcjColors.OnYellow)
+                Text(
+                    text = iniciais(perfil.nome),
+                    style = tipografia.titleLarge,
+                    color = cores.onPrimary,
+                )
             }
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Txt(
+                Text(
                     text = perfil.nome,
-                    size = 18.sp,
-                    weight = FontWeight.SemiBold,
-                    color = IcjColors.TextPrimary,
-                    lineHeight = 23.4.sp, // 1.3 × 18
+                    style = tipografia.titleLarge.copy(lineHeight = 23.4.sp),
+                    color = cores.onBackground,
                 )
-                Txt(
+                Text(
                     text = perfil.cargo,
-                    size = 13.sp,
-                    weight = FontWeight.Normal,
-                    color = IcjColors.TextSecondary,
-                    lineHeight = 18.2.sp, // 1.4 × 13
+                    style = tipografia.bodySmall.copy(lineHeight = 18.2.sp),
+                    color = cores.onSurfaceVariant,
                 )
             }
         }
@@ -225,7 +199,7 @@ private fun CartaoPerfil(perfil: Perfil) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(IcjColors.Border),
+                .background(cores.outline),
         )
 
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -242,22 +216,23 @@ private fun DadoDoPerfil(rotulo: String, valor: String) {
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Txt(rotulo, 13.sp, FontWeight.Normal, IcjColors.TextSecondary)
-        Txt(
+        Text(
+            text = rotulo,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
             text = valor,
-            size = 14.sp,
-            weight = FontWeight.Normal,
-            color = IcjColors.TextPrimary,
-            lineHeight = 19.6.sp, // 1.4 × 14
+            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 19.6.sp),
+            color = MaterialTheme.colorScheme.onBackground,
         )
     }
 }
 
-// ───────────────────────── Rodapé ─────────────────────────
-
 @Composable
 private fun Rodape(onSair: () -> Unit) {
-    val forma = RoundedCornerShape(12.dp)
+    val forma = MaterialTheme.shapes.large
+    val corTexto = MaterialTheme.colorScheme.onBackground
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -268,7 +243,7 @@ private fun Rodape(onSair: () -> Unit) {
                 .fillMaxWidth()
                 .height(52.dp)
                 .clip(forma)
-                .border(1.dp, BordaSair, forma)
+                .border(1.dp, MaterialTheme.extraColors.borderStrong, forma)
                 .clickable(role = Role.Button, onClick = onSair)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -277,54 +252,21 @@ private fun Rodape(onSair: () -> Unit) {
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.Logout,
                 contentDescription = null,
-                tint = Color.White,
+                tint = corTexto,
                 modifier = Modifier.size(18.dp),
             )
-            // No design o texto ocupa o espaço restante e fica centralizado nele.
-            Txt(
+            // O texto ocupa o espaço restante e fica centralizado nele.
+            Text(
                 text = "Sair",
-                size = 15.sp,
-                weight = FontWeight.Medium,
-                color = Color.White,
+                style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
+                color = corTexto,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f),
-                align = TextAlign.Center,
             )
         }
 
-        Txt(
-            text = "© 2026 Gestão ICJ. Todos os direitos reservados.",
-            size = 11.sp,
-            weight = FontWeight.Normal,
-            color = IcjColors.TextMuted,
-            modifier = Modifier.fillMaxWidth(),
-            align = TextAlign.Center,
-        )
+        RodapeCopyright()
     }
-}
-
-// ───────────────────────── Utilitários ─────────────────────────
-
-@Composable
-private fun Txt(
-    text: String,
-    size: TextUnit,
-    weight: FontWeight,
-    color: Color,
-    modifier: Modifier = Modifier,
-    lineHeight: TextUnit = TextUnit.Unspecified,
-    align: TextAlign = TextAlign.Unspecified,
-) {
-    Text(
-        text = text,
-        color = color,
-        fontFamily = Inter,
-        fontWeight = weight,
-        fontSize = size,
-        lineHeight = lineHeight,
-        textAlign = align,
-        overflow = TextOverflow.Ellipsis,
-        modifier = modifier,
-    )
 }
 
 /** "Maria Oliveira" → "MO" (primeira letra do primeiro e do último nome). */
@@ -337,10 +279,9 @@ private fun iniciais(nome: String): String {
     }.uppercase()
 }
 
-@Preview(widthDp = 390, heightDp = 844, showBackground = true, backgroundColor = 0xFF101112)
 @Composable
-private fun MeusDadosScreenPreview() {
-    GestaoIcjTheme {
+private fun PerfilPreview(darkTheme: Boolean) {
+    GestaoIcjTheme(darkTheme = darkTheme) {
         MeusDadosScreen(
             perfil = Perfil(
                 nome = "Maria Oliveira",
@@ -353,3 +294,11 @@ private fun MeusDadosScreenPreview() {
         )
     }
 }
+
+@Preview(name = "Escuro", widthDp = 390, heightDp = 844)
+@Composable
+private fun PerfilEscuroPreview() = PerfilPreview(darkTheme = true)
+
+@Preview(name = "Claro", widthDp = 390, heightDp = 844)
+@Composable
+private fun PerfilClaroPreview() = PerfilPreview(darkTheme = false)

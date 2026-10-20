@@ -1,4 +1,4 @@
-package com.gestaoicj.app.ui.components // TROQUE pelo package do seu projeto
+package com.gestaoicj.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -11,11 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 
-/**
- * Símbolo 48×48 usado no cabeçalho das telas internas.
- * Por enquanto mostra "ICJ" como provisório. Quando adicionar res/drawable/logo_icj,
- * troque o Text pelo Image comentado abaixo (só aqui, e todas as telas atualizam).
- */
 @Composable
 fun SimboloIcj(modifier: Modifier = Modifier) {
     Box(
@@ -30,15 +25,5 @@ fun SimboloIcj(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onPrimary,
             style = MaterialTheme.typography.titleMedium,
         )
-
-        // Image(
-        //     painter = painterResource(R.drawable.logo_icj),
-        //     contentDescription = "Símbolo do Gestão ICJ",
-        //     contentScale = ContentScale.Crop,
-        //     modifier = Modifier
-        //         .align(Alignment.BottomCenter)
-        //         .offset(y = (-4).dp)
-        //         .requiredSize(width = 46.dp, height = 42.dp),
-        // )
     }
 }

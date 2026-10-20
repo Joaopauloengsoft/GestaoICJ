@@ -1,4 +1,4 @@
-package com.gestaoicj.app.ui.reposicao // TROQUE pelo package do seu projeto
+package com.gestaoicj.app.ui.reposicao
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,32 +15,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gestaoicj.app.ui.components.SimboloIcj
+import com.gestaoicj.app.ui.components.CabecalhoTela
+import com.gestaoicj.app.ui.components.RodapeCopyright
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
-import com.gestaoicj.app.ui.theme.IcjColors
-import com.gestaoicj.app.ui.theme.Inter
+import com.gestaoicj.app.ui.theme.extraColors
 
-/**
- * Produto que precisa de reposição: estoque atual menor ou igual ao mínimo cadastrado.
- * O status ("Abaixo do mínimo" / "No mínimo") é calculado a partir dos dois números.
- */
+/** Produto com estoque atual menor ou igual ao mínimo cadastrado. */
 data class ProdutoParaRepor(
     val id: String,
     val nome: String,
@@ -52,10 +45,6 @@ data class ProdutoParaRepor(
     val abaixoDoMinimo: Boolean get() = estoqueAtual < estoqueMinimo
 }
 
-/**
- * @param produtos já filtrados (atual ≤ mínimo) e na ordem em que devem aparecer;
- * no design, os "abaixo do mínimo" vêm antes dos "no mínimo".
- */
 @Composable
 fun ReposicaoScreen(
     produtos: List<ProdutoParaRepor>,
@@ -64,7 +53,7 @@ fun ReposicaoScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(IcjColors.Background)
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(24.dp),
@@ -75,58 +64,26 @@ fun ReposicaoScreen(
                 .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(36.dp),
         ) {
-            Cabecalho()
+            CabecalhoTela(
+                titulo = "Reposição",
+                subtitulo = "Lista automática: produtos com estoque atual menor ou igual ao mínimo definido no cadastro.",
+            )
             ListaDeReposicao(
                 produtos = produtos,
                 modifier = Modifier.weight(1f, fill = false),
             )
         }
-
-        Txt(
-            text = "© 2026 Gestão ICJ. Todos os direitos reservados.",
-            size = 11.sp,
-            weight = FontWeight.Normal,
-            color = IcjColors.TextMuted,
-            modifier = Modifier.fillMaxWidth(),
-            align = TextAlign.Center,
-        )
+        RodapeCopyright()
     }
 }
-
-// ───────────────────────── Cabeçalho ─────────────────────────
-
-@Composable
-private fun Cabecalho() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SimboloIcj()
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Txt("Reposição", 24.sp, FontWeight.SemiBold, IcjColors.TextPrimary)
-            Txt(
-                text = "Lista automática: produtos com estoque atual menor ou igual ao mínimo definido no cadastro.",
-                size = 12.sp,
-                weight = FontWeight.Normal,
-                color = IcjColors.TextSecondary,
-                lineHeight = 19.2.sp, // 1.6 × 12
-            )
-        }
-    }
-}
-
-// ───────────────────────── Lista ─────────────────────────
 
 @Composable
 private fun ListaDeReposicao(
     produtos: List<ProdutoParaRepor>,
     modifier: Modifier = Modifier,
 ) {
-    val forma = RoundedCornerShape(8.dp)
+    val forma = MaterialTheme.shapes.medium
+    val cores = MaterialTheme.colorScheme
     val abaixo = produtos.count { it.abaixoDoMinimo }
     val noMinimo = produtos.size - abaixo
 
@@ -140,23 +97,28 @@ private fun ListaDeReposicao(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Txt("Produtos para repor", 14.sp, FontWeight.Medium, IcjColors.TextPrimary, maxLines = 1)
-                Txt(
-                    text = if (produtos.size == 1) "1 produto" else "${produtos.size} produtos",
-                    size = 13.sp,
-                    weight = FontWeight.Normal,
-                    color = IcjColors.TextSecondary,
+                Text(
+                    text = "Produtos para repor",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = cores.onBackground,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = if (produtos.size == 1) "1 produto" else "${produtos.size} produtos",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = cores.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
 
-            // A lista rola sozinha quando há mais produtos do que cabe na tela.
             LazyColumn(
                 modifier = Modifier
                     .weight(1f, fill = false)
                     .clip(forma)
-                    .background(IcjColors.Field)
-                    .border(1.dp, IcjColors.Border, forma),
+                    .background(cores.surfaceVariant)
+                    .border(1.dp, cores.outline, forma),
             ) {
                 itemsIndexed(produtos, key = { _, produto -> produto.id }) { indice, produto ->
                     LinhaDeReposicao(produto, ultimo = indice == produtos.lastIndex)
@@ -164,18 +126,19 @@ private fun ListaDeReposicao(
             }
         }
 
-        Txt(
+        Text(
             text = "$abaixo abaixo do mínimo · $noMinimo no mínimo",
-            size = 13.sp,
-            weight = FontWeight.Normal,
-            color = IcjColors.TextSecondary,
-            lineHeight = 19.5.sp, // 1.5 × 13
+            style = MaterialTheme.typography.bodySmall.copy(lineHeight = 19.5.sp),
+            color = cores.onSurfaceVariant,
         )
     }
 }
 
 @Composable
 private fun LinhaDeReposicao(produto: ProdutoParaRepor, ultimo: Boolean) {
+    val cores = MaterialTheme.colorScheme
+    val destaque = MaterialTheme.extraColors.accent
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -188,13 +151,19 @@ private fun LinhaDeReposicao(produto: ProdutoParaRepor, ultimo: Boolean) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Txt(produto.nome, 14.sp, FontWeight.Medium, IcjColors.TextPrimary, maxLines = 2)
-                Txt(
+                Text(
+                    text = produto.nome,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = cores.onBackground,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
                     text = "${produto.codigo} · ${if (produto.abaixoDoMinimo) "Abaixo do mínimo" else "No mínimo"}",
-                    size = 11.sp,
-                    weight = FontWeight.Normal,
-                    color = IcjColors.Yellow,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = destaque,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
 
@@ -206,14 +175,14 @@ private fun LinhaDeReposicao(produto: ProdutoParaRepor, ultimo: Boolean) {
                     rotulo = "Estoque atual",
                     numero = produto.estoqueAtual,
                     unidade = produto.unidade,
-                    corNumero = IcjColors.Yellow,
+                    corNumero = destaque,
                     modifier = Modifier.weight(1f),
                 )
                 Comparacao(
                     rotulo = "Mínimo cadastrado",
                     numero = produto.estoqueMinimo,
                     unidade = produto.unidade,
-                    corNumero = IcjColors.TextPrimary,
+                    corNumero = cores.onBackground,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -225,7 +194,7 @@ private fun LinhaDeReposicao(produto: ProdutoParaRepor, ultimo: Boolean) {
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(IcjColors.Border),
+                    .background(cores.outline),
             )
         }
     }
@@ -239,56 +208,34 @@ private fun Comparacao(
     corNumero: Color,
     modifier: Modifier = Modifier,
 ) {
+    val tipografia = MaterialTheme.typography
+    val estiloNumero = tipografia.titleLarge.toSpanStyle().copy(color = corNumero)
+    val estiloUnidade = tipografia.labelSmall.toSpanStyle()
+        .copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Txt(rotulo, 11.sp, FontWeight.Normal, IcjColors.TextSecondary, maxLines = 1)
-        // Número grande e unidade pequena na mesma linha de base, como no design.
+        Text(
+            text = rotulo,
+            style = tipografia.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        // Número grande e unidade pequena na mesma linha de base.
         Text(
             text = buildAnnotatedString {
-                withStyle(SpanStyle(color = corNumero, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)) {
-                    append(numero.toString())
-                }
-                withStyle(SpanStyle(color = IcjColors.TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Normal)) {
-                    append(" $unidade")
-                }
+                withStyle(estiloNumero) { append(numero.toString()) }
+                withStyle(estiloUnidade) { append(" $unidade") }
             },
-            fontFamily = Inter,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
     }
 }
 
-// ───────────────────────── Utilitários ─────────────────────────
-
 @Composable
-private fun Txt(
-    text: String,
-    size: TextUnit,
-    weight: FontWeight,
-    color: Color,
-    modifier: Modifier = Modifier,
-    maxLines: Int = Int.MAX_VALUE,
-    lineHeight: TextUnit = TextUnit.Unspecified,
-    align: TextAlign = TextAlign.Unspecified,
-) {
-    Text(
-        text = text,
-        color = color,
-        fontFamily = Inter,
-        fontWeight = weight,
-        fontSize = size,
-        lineHeight = lineHeight,
-        maxLines = maxLines,
-        overflow = TextOverflow.Ellipsis,
-        textAlign = align,
-        modifier = modifier,
-    )
-}
-
-@Preview(widthDp = 390, heightDp = 844, showBackground = true, backgroundColor = 0xFF101112)
-@Composable
-private fun ReposicaoScreenPreview() {
-    GestaoIcjTheme {
+private fun ReposicaoPreview(darkTheme: Boolean) {
+    GestaoIcjTheme(darkTheme = darkTheme) {
         ReposicaoScreen(
             produtos = listOf(
                 ProdutoParaRepor("3", "Álcool em gel 500 ml", "ICJ-003", 4, 10, "unidades"),
@@ -298,3 +245,11 @@ private fun ReposicaoScreenPreview() {
         )
     }
 }
+
+@Preview(name = "Escuro", widthDp = 390, heightDp = 844)
+@Composable
+private fun ReposicaoEscuroPreview() = ReposicaoPreview(darkTheme = true)
+
+@Preview(name = "Claro", widthDp = 390, heightDp = 844)
+@Composable
+private fun ReposicaoClaroPreview() = ReposicaoPreview(darkTheme = false)

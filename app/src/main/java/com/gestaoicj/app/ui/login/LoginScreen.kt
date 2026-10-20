@@ -1,4 +1,4 @@
-package com.gestaoicj.app.ui.login // TROQUE pelo package do seu projeto
+package com.gestaoicj.app.ui.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,12 +23,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
@@ -40,6 +39,7 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,7 +57,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -66,44 +65,44 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gestaoicj.app.R // TROQUE pelo R do seu projeto
+import com.gestaoicj.app.R
+import com.gestaoicj.app.ui.components.RodapeCopyright
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
-import com.gestaoicj.app.ui.theme.IcjColors
-import com.gestaoicj.app.ui.theme.Inter
+import com.gestaoicj.app.ui.theme.extraColors
 
 // Largura aproximada do título "Gestão ICJ" a 48sp, medida no frame de 390dp.
 private const val TitleWidthAt48Sp = 251f
 
+private val SymbolWidth = 92.dp
 
 @Composable
 fun LoginScreen(
-    onLogin: (email: String, senha: String, lembrar: Boolean) -> Unit,
-    onForgotPassword: (email: String) -> Unit,
+    onLogin: (email: String, password: String, remember: Boolean) -> Unit,
+    onForgotPassword: () -> Unit,
     onHelp: () -> Unit,
     onPrivacy: () -> Unit,
     onTerms: () -> Unit,
     modifier: Modifier = Modifier,
     erro: String? = null,
-    carregando: Boolean = false
+    carregando: Boolean = false,
 ) {
-
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var showPassword by rememberSaveable { mutableStateOf(false) }
     var remember by rememberSaveable { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    val cores = MaterialTheme.colorScheme
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(IcjColors.Background, IcjColors.BackgroundEnd))),
+            .background(Brush.verticalGradient(listOf(cores.background, cores.surfaceContainer))),
     ) {
         val screenHeight = maxHeight
-        // O título ocupa a largura restante ao lado do símbolo (só margem esquerda de 24dp,
-        // como no design, onde ele avança sobre a margem direita). Em telas estreitas a fonte encolhe.
+        // O título ocupa a largura que sobra ao lado do símbolo; em telas estreitas a fonte encolhe.
         val availableForTitle = maxWidth - 24.dp - SymbolWidth - 6.dp
         val titleSize = minOf(48f, 48f * availableForTitle.value / TitleWidthAt48Sp).sp
 
@@ -182,7 +181,7 @@ fun LoginScreen(
                                                     else Icons.Outlined.Visibility,
                                                 contentDescription =
                                                     if (showPassword) "Ocultar senha" else "Mostrar senha",
-                                                tint = IcjColors.TextSecondary,
+                                                tint = cores.onSurfaceVariant,
                                                 modifier = Modifier.size(20.dp),
                                             )
                                         }
@@ -192,12 +191,21 @@ fun LoginScreen(
                                 AccessPreferences(
                                     remember = remember,
                                     onRememberChange = { remember = it },
-                                    onForgotPassword = {
-                                        onForgotPassword(email)
-                                    },
+                                    onForgotPassword = onForgotPassword,
                                 )
 
-                                EnterButton(onClick = { onLogin(email, password, remember) })
+                                if (erro != null) {
+                                    Text(
+                                        text = erro,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = cores.error,
+                                    )
+                                }
+
+                                EnterButton(
+                                    carregando = carregando,
+                                    onClick = { onLogin(email, password, remember) },
+                                )
                             }
 
                             AccessHelp(onHelp = onHelp)
@@ -211,12 +219,8 @@ fun LoginScreen(
     }
 }
 
-private val SymbolWidth = 92.dp
-
-// ───────────────────────── Cabeçalho ─────────────────────────
-
 @Composable
-private fun InstitutionalHeader(titleSize: androidx.compose.ui.unit.TextUnit) {
+private fun InstitutionalHeader(titleSize: TextUnit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -227,11 +231,9 @@ private fun InstitutionalHeader(titleSize: androidx.compose.ui.unit.TextUnit) {
         Box(
             modifier = Modifier
                 .size(width = SymbolWidth, height = 98.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .background(IcjColors.Yellow),
+                .clip(MaterialTheme.shapes.small)
+                .background(MaterialTheme.colorScheme.primary),
         ) {
-            // Adicione o PNG exportado do nó "image 1" (37:65) como res/drawable/logo_icj.png
-
             Image(
                 painter = painterResource(R.drawable.logo_icj),
                 contentDescription = "Símbolo do Gestão ICJ",
@@ -246,28 +248,22 @@ private fun InstitutionalHeader(titleSize: androidx.compose.ui.unit.TextUnit) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = "Gestão ICJ",
-                color = IcjColors.TextPrimary,
-                fontFamily = Inter,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = titleSize,
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = titleSize),
+                color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,
                 softWrap = false,
                 overflow = TextOverflow.Visible,
             )
             Text(
                 text = "PLATAFORMA DE GESTÃO",
-                color = IcjColors.TextSecondary,
-                fontFamily = Inter,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 softWrap = false,
             )
         }
     }
 }
-
-// ───────────────────────── Acesso ─────────────────────────
 
 @Composable
 private fun AccessContext() {
@@ -278,15 +274,13 @@ private fun AccessContext() {
         Icon(
             imageVector = Icons.Outlined.Lock,
             contentDescription = null,
-            tint = IcjColors.TextSecondary,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(14.dp),
         )
         Text(
             text = "ACESSO CORPORATIVO",
-            color = IcjColors.TextSecondary,
-            fontFamily = Inter,
-            fontWeight = FontWeight.Medium,
-            fontSize = 11.sp,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -296,19 +290,13 @@ private fun Welcome() {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = "Bem-vindo de volta.",
-            color = IcjColors.TextPrimary,
-            fontFamily = Inter,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 28.sp,
-            lineHeight = 33.6.sp, // 1.2 × 28
+            style = MaterialTheme.typography.headlineMedium.copy(lineHeight = 33.6.sp),
+            color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
             text = "Entre com sua conta para acessar o Gestão ICJ.",
-            color = IcjColors.TextSecondary,
-            fontFamily = Inter,
-            fontWeight = FontWeight.Normal,
-            fontSize = 14.sp,
-            lineHeight = 22.4.sp, // 1.6 × 14
+            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.4.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -326,25 +314,24 @@ private fun IcjTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     trailing: (@Composable () -> Unit)? = null,
 ) {
-    val shape = RoundedCornerShape(8.dp)
+    val forma = MaterialTheme.shapes.medium
+    val cores = MaterialTheme.colorScheme
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = label,
-            color = IcjColors.TextPrimary,
-            fontFamily = Inter,
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.titleSmall,
+            color = cores.onBackground,
         )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp)
-                .clip(shape)
-                .background(IcjColors.Field)
-                .border(1.dp, IcjColors.Border, shape)
-                // Com o botão de olho, o padding direito vai para dentro da área de toque (48dp):
-                // 2dp + 24dp (metade da área) = 26dp do centro do ícone até a borda, igual ao design.
+                .clip(forma)
+                .background(cores.surfaceVariant)
+                .border(1.dp, cores.outline, forma)
+                // Com o botão de olho, o padding direito entra na área de toque (48dp):
+                // 2dp + 24dp = 26dp do centro do ícone até a borda, como no design.
                 .padding(start = 16.dp, end = if (trailing != null) 2.dp else 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -352,20 +339,20 @@ private fun IcjTextField(
             Icon(
                 imageVector = leadingIcon,
                 contentDescription = null,
-                tint = IcjColors.TextSecondary,
+                tint = cores.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
                 singleLine = true,
-                textStyle = TextStyle(
-                    color = IcjColors.TextPrimary,
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 14.sp,
+                // O texto digitado não usa a altura de linha nem o espaçamento padrão do Text.
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    color = cores.onBackground,
+                    lineHeight = TextUnit.Unspecified,
+                    letterSpacing = TextUnit.Unspecified,
                 ),
-                cursorBrush = SolidColor(IcjColors.Yellow),
+                cursorBrush = SolidColor(MaterialTheme.extraColors.accent),
                 visualTransformation = visualTransformation,
                 keyboardOptions = keyboardOptions,
                 keyboardActions = keyboardActions,
@@ -375,10 +362,8 @@ private fun IcjTextField(
                         if (value.isEmpty()) {
                             Text(
                                 text = placeholder,
-                                color = IcjColors.TextMuted,
-                                fontFamily = Inter,
-                                fontWeight = FontWeight.Normal,
-                                fontSize = 14.sp,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.extraColors.textMuted,
                                 maxLines = 1,
                             )
                         }
@@ -397,6 +382,8 @@ private fun AccessPreferences(
     onRememberChange: (Boolean) -> Unit,
     onForgotPassword: () -> Unit,
 ) {
+    val cores = MaterialTheme.colorScheme
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -411,68 +398,73 @@ private fun AccessPreferences(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val boxShape = RoundedCornerShape(4.dp)
+            val formaCaixa = MaterialTheme.shapes.extraSmall
             Box(
                 modifier = Modifier
                     .size(18.dp)
-                    .clip(boxShape)
-                    .background(if (remember) IcjColors.Yellow else IcjColors.Field)
-                    .border(1.dp, if (remember) IcjColors.Yellow else IcjColors.Border, boxShape),
+                    .clip(formaCaixa)
+                    .background(if (remember) cores.primary else cores.surfaceVariant)
+                    .border(1.dp, if (remember) cores.primary else cores.outline, formaCaixa),
                 contentAlignment = Alignment.Center,
             ) {
                 if (remember) {
                     Icon(
                         imageVector = Icons.Filled.Check,
                         contentDescription = null,
-                        tint = IcjColors.OnYellow,
+                        tint = cores.onPrimary,
                         modifier = Modifier.size(14.dp),
                     )
                 }
             }
             Text(
                 text = "Lembrar de mim",
-                color = IcjColors.TextSecondary,
-                fontFamily = Inter,
-                fontWeight = FontWeight.Normal,
-                fontSize = 13.sp,
+                style = MaterialTheme.typography.bodySmall,
+                color = cores.onSurfaceVariant,
             )
         }
 
         Text(
             text = "Esqueci minha senha",
-            color = IcjColors.Yellow,
-            fontFamily = Inter,
-            fontWeight = FontWeight.Medium,
-            fontSize = 13.sp,
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.extraColors.accent,
             modifier = Modifier.clickable(role = Role.Button, onClick = onForgotPassword),
         )
     }
 }
 
 @Composable
-private fun EnterButton(onClick: () -> Unit) {
+private fun EnterButton(carregando: Boolean, onClick: () -> Unit) {
+    val cores = MaterialTheme.colorScheme
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(IcjColors.Yellow)
-            .clickable(role = Role.Button, onClick = onClick),
+            .clip(MaterialTheme.shapes.medium)
+            .background(cores.primary)
+            .clickable(enabled = !carregando, role = Role.Button, onClick = onClick),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (carregando) {
+            CircularProgressIndicator(
+                color = cores.onPrimary,
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(20.dp),
+            )
+            return@Row
+        }
         Text(
             text = "Entrar",
-            color = IcjColors.OnYellow,
-            fontFamily = Inter,
-            fontWeight = FontWeight.Normal, // no design o botão usa Inter Regular
-            fontSize = 16.sp,
+            // No design o botão usa Inter Regular.
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal),
+            color = cores.onPrimary,
         )
         Spacer(Modifier.width(12.dp))
         Icon(
             imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
             contentDescription = null,
-            tint = IcjColors.OnYellow,
+            tint = cores.onPrimary,
             modifier = Modifier.size(20.dp),
         )
     }
@@ -480,6 +472,8 @@ private fun EnterButton(onClick: () -> Unit) {
 
 @Composable
 private fun AccessHelp(onHelp: () -> Unit) {
+    val cores = MaterialTheme.colorScheme
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -487,11 +481,8 @@ private fun AccessHelp(onHelp: () -> Unit) {
     ) {
         Text(
             text = "Ainda não tem acesso? Fale com o administrador da sua organização.",
-            color = IcjColors.TextSecondary,
-            fontFamily = Inter,
-            fontWeight = FontWeight.Normal,
-            fontSize = 13.sp,
-            lineHeight = 20.8.sp, // 1.6 × 13
+            style = MaterialTheme.typography.bodySmall.copy(lineHeight = 20.8.sp),
+            color = cores.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
         Row(
@@ -502,21 +493,17 @@ private fun AccessHelp(onHelp: () -> Unit) {
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
                 contentDescription = null,
-                tint = IcjColors.TextPrimary,
+                tint = cores.onBackground,
                 modifier = Modifier.size(16.dp),
             )
             Text(
                 text = "Precisa de ajuda?",
-                color = IcjColors.TextPrimary,
-                fontFamily = Inter,
-                fontWeight = FontWeight.Medium,
-                fontSize = 13.sp,
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                color = cores.onBackground,
             )
         }
     }
 }
-
-// ───────────────────────── Rodapé ─────────────────────────
 
 @Composable
 private fun Footer(onPrivacy: () -> Unit, onTerms: () -> Unit) {
@@ -534,18 +521,11 @@ private fun Footer(onPrivacy: () -> Unit, onTerms: () -> Unit) {
                 modifier = Modifier
                     .size(3.dp)
                     .clip(CircleShape)
-                    .background(IcjColors.TextMuted),
+                    .background(MaterialTheme.extraColors.textMuted),
             )
             FooterLink("Termos de uso", onTerms)
         }
-        Text(
-            text = "© 2026 Gestão ICJ. Todos os direitos reservados.",
-            color = IcjColors.TextMuted,
-            fontFamily = Inter,
-            fontWeight = FontWeight.Normal,
-            fontSize = 11.sp,
-            textAlign = TextAlign.Center,
-        )
+        RodapeCopyright()
     }
 }
 
@@ -553,18 +533,15 @@ private fun Footer(onPrivacy: () -> Unit, onTerms: () -> Unit) {
 private fun FooterLink(text: String, onClick: () -> Unit) {
     Text(
         text = text,
-        color = IcjColors.TextSecondary,
-        fontFamily = Inter,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
+        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Normal),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
     )
 }
 
-@Preview(widthDp = 390, heightDp = 844, showBackground = true, backgroundColor = 0xFF101112)
 @Composable
-private fun LoginScreenPreview() {
-    GestaoIcjTheme {
+private fun LoginPreview(darkTheme: Boolean) {
+    GestaoIcjTheme(darkTheme = darkTheme) {
         LoginScreen(
             onLogin = { _, _, _ -> },
             onForgotPassword = {},
@@ -574,3 +551,11 @@ private fun LoginScreenPreview() {
         )
     }
 }
+
+@Preview(name = "Escuro", widthDp = 390, heightDp = 844)
+@Composable
+private fun LoginEscuroPreview() = LoginPreview(darkTheme = true)
+
+@Preview(name = "Claro", widthDp = 390, heightDp = 844)
+@Composable
+private fun LoginClaroPreview() = LoginPreview(darkTheme = false)

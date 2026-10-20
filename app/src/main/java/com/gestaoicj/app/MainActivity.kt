@@ -9,7 +9,7 @@ import com.gestaoicj.app.navigation.AppNav
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
 import dagger.hilt.android.AndroidEntryPoint
 
-// @AndroidEntryPoint é necessário para usar hiltViewModel() nas telas
+// @AndroidEntryPoint permite que os ViewModels com @HiltViewModel sejam criados com viewModel().
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,10 +21,7 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.auto(transparente, transparente),
         )
         setContent {
-            // TODO(migração): Login, Reposição, Histórico e Perfil ainda usam cores escuras
-            // fixas (IcjColors). Até migrarem, o app fica travado no escuro, como era antes.
-            // Depois, apague `darkTheme = true` para seguir o modo do sistema.
-            GestaoIcjTheme(darkTheme = true) {
+            GestaoIcjTheme {
                 AppNav()
             }
         }

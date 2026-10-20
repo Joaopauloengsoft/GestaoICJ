@@ -74,5 +74,4 @@ dependencies {
     ksp("androidx.hilt:hilt-compiler:1.4.0")
     implementation("androidx.work:work-runtime-ktx:2.11.2")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
 }
