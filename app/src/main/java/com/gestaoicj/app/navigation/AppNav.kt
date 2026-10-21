@@ -1,5 +1,6 @@
 package com.gestaoicj.app.navigation
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
@@ -8,9 +9,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -32,6 +36,8 @@ fun AppNav(
 ) {
     val nav = rememberNavController()
     val auth by authVm.state.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val backStackEntry by nav.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -65,7 +71,26 @@ fun AppNav(
             composable(Screen.Login.route) {
                 LoginScreen(
                     onLogin = { email, senha, _ -> authVm.entrar(email, senha) },
-                    onForgotPassword = {},
+                    onForgotPassword = { email ->
+                        scope.launch {
+                            authVm.recuperarSenha(email).fold(
+                                onSuccess = {
+                                    Toast.makeText(
+                                        context,
+                                        "Confira seu e-mail para redefinir a senha.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                },
+                                onFailure = { erro ->
+                                    Toast.makeText(
+                                        context,
+                                        erro.message ?: "Não foi possível enviar o e-mail.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            )
+                        }
+                    },
                     onHelp = {},
                     onPrivacy = {},
                     onTerms = {},

@@ -81,7 +81,7 @@ private val SymbolWidth = 92.dp
 @Composable
 fun LoginScreen(
     onLogin: (email: String, password: String, remember: Boolean) -> Unit,
-    onForgotPassword: () -> Unit,
+    onForgotPassword: (email: String) -> Unit,
     onHelp: () -> Unit,
     onPrivacy: () -> Unit,
     onTerms: () -> Unit,
@@ -191,7 +191,7 @@ fun LoginScreen(
                                 AccessPreferences(
                                     remember = remember,
                                     onRememberChange = { remember = it },
-                                    onForgotPassword = onForgotPassword,
+                                    onForgotPassword = { onForgotPassword(email) },
                                 )
 
                                 if (erro != null) {
