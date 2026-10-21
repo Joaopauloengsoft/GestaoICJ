@@ -3,44 +3,41 @@ package com.gestaoicj.app.data.repository
 import android.util.Log
 import com.gestaoicj.app.data.local.dao.UsuarioDao
 import com.gestaoicj.app.data.local.entity.UsuarioEntity
-import com.gestaoicj.app.data.remote.FirestoreDataSource
 import com.gestaoicj.app.data.remote.toUsuarioEntity
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 class AuthRepository @Inject constructor(
     private val auth: FirebaseAuth,
-    private val remoto: FirestoreDataSource,
+    private val db: FirebaseFirestore,
     private val usuarioDao: UsuarioDao,
     private val sync: SyncRepository,
     private val scheduler: SyncScheduler
 ) {
 
-    // uid de quem está logado (null se ninguém)
     val uidAtual: String? get() = auth.currentUser?.uid
 
-    // O Firebase guarda a sessão: ao reabrir o app, continua logado.
-    // A tela inicial usa isto para decidir entre Login e Estoque.
     val logado: Boolean get() = auth.currentUser != null
 
-    // Avisa as telas quando o usuário entra ou sai (uid = null quando ninguém está logado)
     val uidFlow: Flow<String?> = callbackFlow {
         val ouvinte = FirebaseAuth.AuthStateListener { trySend(it.currentUser?.uid) }
-        auth.addAuthStateListener(ouvinte)      // já emite o estado atual ao registrar
+        auth.addAuthStateListener(ouvinte)
         awaitClose { auth.removeAuthStateListener(ouvinte) }
     }.distinctUntilChanged()
 
-    // Dados do usuário no Room (nome e e-mail para a tela de perfil)
     fun observarUsuario(uid: String): Flow<UsuarioEntity?> = usuarioDao.observar(uid)
 
-    // UC01 - Cadastrar conta (exige internet)
     suspend fun cadastrar(nome: String, email: String, senha: String): Result<Unit> = resultado {
         require(nome.isNotBlank()) { "Informe seu nome" }
         require(email.isNotBlank()) { "Informe o e-mail" }
@@ -55,11 +52,19 @@ class AuthRepository @Inject constructor(
             email = email.trim(),
             createdAt = System.currentTimeMillis(),
         )
-        remoto.salvarUsuario(usuario)      // cria usuarios/{uid} no Firestore
-        usuarioDao.salvar(usuario)         // e no Room
+
+        db.collection("usuarios").document(usuario.id).set(
+            mapOf(
+                "nome" to usuario.nome,
+                "email" to usuario.email,
+                "createdAt" to Timestamp(Date(usuario.createdAt))
+            ),
+            SetOptions.merge()
+        ).await()
+
+        usuarioDao.salvar(usuario)
     }
 
-    // UC02 - Entrar (exige internet)
     suspend fun entrar(email: String, senha: String): Result<Unit> = resultado {
         require(email.isNotBlank()) { "Informe o e-mail" }
         require(senha.isNotBlank()) { "Informe a senha" }
@@ -67,58 +72,69 @@ class AuthRepository @Inject constructor(
         val user = auth.signInWithEmailAndPassword(email.trim(), senha).await().user
             ?: error("Não foi possível entrar")
 
-        val doc = remoto.buscarUsuario(user.uid)
+        val doc = db.collection("usuarios").document(user.uid).get().await()
         val usuario = if (doc.exists()) {
             doc.toUsuarioEntity()
         } else {
-            // Conta existe no Auth, mas o documento não foi criado (falha no cadastro): cria agora
             UsuarioEntity(
                 id = user.uid,
                 nome = email.substringBefore("@"),
                 email = email.trim(),
                 createdAt = System.currentTimeMillis(),
-            ).also { remoto.salvarUsuario(it) }
+            ).also { novo ->
+                db.collection("usuarios").document(novo.id).set(
+                    mapOf(
+                        "nome" to novo.nome,
+                        "email" to novo.email,
+                        "createdAt" to Timestamp(Date(novo.createdAt))
+                    ),
+                    SetOptions.merge()
+                ).await()
+            }
         }
-        usuarioDao.salvar(usuario)         // precisa existir no Room antes dos produtos (chave estrangeira)
+        usuarioDao.salvar(usuario)
 
         try {
             sync.baixarTudo(user.uid)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // Se o download falhar, o usuário entra mesmo assim com os dados locais
             Log.w("AuthRepository", "Falha ao baixar dados após o login", e)
         }
-        scheduler.agendar()      // envia o que ficou pendente
-        scheduler.iniciarPeriodico()   // rede de segurança a cada 6 h (idempotente: KEEP)
+        scheduler.agendar()
+        scheduler.iniciarPeriodico()
     }
 
-    // UC11 - Recuperar senha
     suspend fun recuperarSenha(email: String): Result<Unit> = resultado {
         require(email.isNotBlank()) { "Informe o e-mail" }
         auth.sendPasswordResetEmail(email.trim()).await()
     }
 
-    // UC10 - Sair da conta
     fun sair() = auth.signOut()
 
-    // UC10 - Editar o nome (exige internet)
     suspend fun atualizarNome(nome: String): Result<Unit> = resultado {
         val uid = uidAtual ?: error("Sessão expirada. Entre novamente.")
         require(nome.isNotBlank()) { "Informe seu nome" }
 
         val atual = usuarioDao.buscarPorId(uid) ?: error("Usuário não encontrado")
         val novo = atual.copy(nome = nome.trim())
-        remoto.salvarUsuario(novo)
+
+        db.collection("usuarios").document(novo.id).set(
+            mapOf(
+                "nome" to novo.nome,
+                "email" to novo.email,
+                "createdAt" to Timestamp(Date(novo.createdAt))
+            ),
+            SetOptions.merge()
+        ).await()
     }
 
-    // UC10 - Trocar senha (exige internet)
     suspend fun alterarSenha(senhaAtual: String, novaSenha: String): Result<Unit> = resultado {
         val user = auth.currentUser ?: error("Sessão expirada. Entre novamente.")
         val email = user.email ?: error("Conta sem e-mail")
         require(novaSenha.length >= 6) { "A nova senha deve ter pelo menos 6 caracteres" }
 
-        // O Firebase exige login recente para operações sensíveis: reautentica primeiro
+        // Firebase exige login recente para operações sensíveis
         user.reauthenticate(EmailAuthProvider.getCredential(email, senhaAtual)).await()
         user.updatePassword(novaSenha).await()
     }

@@ -31,7 +31,7 @@ object DataModule {
     @Provides @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "estoque.db")
-            .fallbackToDestructiveMigration(true)   // SÓ EM DESENVOLVIMENTO: remover antes de publicar
+            .fallbackToDestructiveMigration(true)
             .build()
 
     @Provides fun provideUsuarioDao(db: AppDatabase): UsuarioDao = db.usuarioDao()

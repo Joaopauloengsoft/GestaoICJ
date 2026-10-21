@@ -27,8 +27,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-// Alimenta as três telas de dados (Estoque, Reposição e Histórico) a partir do Room.
-// As listas se atualizam sozinhas quando o banco muda e quando o usuário entra ou sai.
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class EstoqueViewModel @Inject constructor(
@@ -42,8 +40,6 @@ class EstoqueViewModel @Inject constructor(
     }
 
     private val uid: Flow<String?> = authRepo.uidFlow
-
-    // ---------- Estoque ----------
 
     private val _busca = MutableStateFlow("")
     val busca: StateFlow<String> = _busca
@@ -60,23 +56,17 @@ class EstoqueViewModel @Inject constructor(
             .map { lista -> lista.map { it.paraTela() } }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // Total sem o filtro da busca (o "N cadastrados" do cabeçalho da lista)
     val totalCadastrados: StateFlow<Int> =
         uid.flatMapLatest { u ->
             if (u == null) flowOf(0) else repo.observarEstoque(u).map { it.size }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
-    // ---------- Reposição ----------
-
-    // "Abaixo do mínimo" vem antes de "No mínimo" (a ordenação é estável: dentro de cada grupo, por nome)
     val reposicao: StateFlow<List<ProdutoParaRepor>> =
         uid.flatMapLatest { u ->
             if (u == null) flowOf(emptyList<ProdutoEntity>()) else repo.observarReposicao(u)
         }
             .map { lista -> lista.map { it.paraReposicao() }.sortedByDescending { it.abaixoDoMinimo } }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    // ---------- Histórico ----------
 
     private val _filtro = MutableStateFlow(FiltroMovimentacao.Todas)
     val filtro: StateFlow<FiltroMovimentacao> = _filtro
@@ -85,7 +75,6 @@ class EstoqueViewModel @Inject constructor(
         _filtro.value = filtro
     }
 
-    // Por enquanto o período é fixo nos últimos 7 dias
     val periodoRotulo: String = "$DIAS_DO_PERIODO dias"
 
     fun periodoTexto(): String {

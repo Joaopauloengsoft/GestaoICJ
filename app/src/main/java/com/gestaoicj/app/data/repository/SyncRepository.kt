@@ -2,38 +2,44 @@ package com.gestaoicj.app.data.repository
 
 import com.gestaoicj.app.data.local.dao.MovimentoDao
 import com.gestaoicj.app.data.local.dao.ProdutoDao
-import com.gestaoicj.app.data.remote.FirestoreDataSource
+import com.gestaoicj.app.data.remote.toMap
+import com.gestaoicj.app.data.remote.toMovimentoEntity
+import com.gestaoicj.app.data.remote.toProdutoEntity
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class SyncRepository @Inject constructor(
-    private val remoto: FirestoreDataSource,
+    private val db: FirebaseFirestore,
     private val produtoDao: ProdutoDao,
     private val movimentoDao: MovimentoDao
 ) {
 
-    // Room -> Firestore: envia tudo que está com sincronizado = 0
     suspend fun enviarPendentes(uid: String) {
+        val ref = db.collection("usuarios").document(uid)
         for (produto in produtoDao.pendentes(uid)) {
-            remoto.enviarProduto(uid, produto)
+            ref.collection("produtos").document(produto.id).set(produto.toMap()).await()
             produtoDao.marcarSincronizado(produto.id, produto.updatedAt)
         }
         for (movimento in movimentoDao.pendentes(uid)) {
-            remoto.enviarMovimento(uid, movimento)
+            ref.collection("movimentos").document(movimento.id).set(movimento.toMap()).await()
             movimentoDao.marcarSincronizado(movimento.id)
         }
     }
 
-    // Firestore -> Room: usado no login e em aparelho novo
+    // Produtos antes de movimentos por causa da FK no Room
     suspend fun baixarTudo(uid: String) {
-        // Produtos primeiro, porque os movimentos dependem deles (chave estrangeira)
-        for (daNuvem in remoto.baixarProdutos(uid)) {
+        val ref = db.collection("usuarios").document(uid)
+
+        for (daNuvem in ref.collection("produtos").get().await().documents.map { it.toProdutoEntity(uid) }) {
             val local = produtoDao.buscarPorId(daNuvem.id)
-            // Regra: a alteração mais recente vence, e nunca sobrescreve
-            // uma alteração local que ainda não foi enviada
             val deveSobrescrever = local == null ||
                     (local.sincronizado && daNuvem.updatedAt >= local.updatedAt)
             if (deveSobrescrever) produtoDao.salvar(daNuvem)
         }
-        movimentoDao.salvarTodos(remoto.baixarMovimentos(uid))
+
+        movimentoDao.salvarTodos(
+            ref.collection("movimentos").get().await().documents.map { it.toMovimentoEntity(uid) }
+        )
     }
 }

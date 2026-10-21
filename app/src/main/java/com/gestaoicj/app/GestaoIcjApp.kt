@@ -15,17 +15,16 @@ class GestaoIcjApp : Application(), Configuration.Provider {
     @Inject lateinit var scheduler: SyncScheduler
     @Inject lateinit var auth: FirebaseAuth
 
-    // Ensina o WorkManager a criar workers com o Hilt
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
 
     override fun onCreate() {
-        super.onCreate()        // o Hilt injeta os campos acima aqui
+        super.onCreate()
         if (auth.currentUser != null) {
-            scheduler.agendar()           // envia o que ficou pendente
-            scheduler.iniciarPeriodico()  // rede de segurança a cada 6 h
+            scheduler.agendar()
+            scheduler.iniciarPeriodico()
         }
     }
 }

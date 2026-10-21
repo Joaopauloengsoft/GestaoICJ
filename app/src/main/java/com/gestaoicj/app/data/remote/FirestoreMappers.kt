@@ -8,8 +8,6 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import java.util.Date
 
-// ---------- Room (entidade) -> Firestore (mapa) ----------
-
 fun ProdutoEntity.toMap(): Map<String, Any?> = mapOf(
     "codigoBarras" to codigoBarras,
     "nome" to nome,
@@ -32,9 +30,6 @@ fun MovimentoEntity.toMap(): Map<String, Any?> = mapOf(
     "observacao" to observacao
 )
 
-
-// ---------- Firestore (documento) -> Room (entidade) ----------
-
 fun DocumentSnapshot.toUsuarioEntity(): UsuarioEntity = UsuarioEntity(
     id = id,
     nome = getString("nome") ?: "",
@@ -52,7 +47,7 @@ fun DocumentSnapshot.toProdutoEntity(uid: String): ProdutoEntity = ProdutoEntity
     unidade = getString("unidade") ?: "un",
     createdAt = getTimestamp("createdAt")?.toDate()?.time ?: 0L,
     updatedAt = getTimestamp("updatedAt")?.toDate()?.time ?: 0L,
-    sincronizado = true,                      // veio da nuvem, então já está sincronizado
+    sincronizado = true,
     excluido = getBoolean("excluido") ?: false
 )
 

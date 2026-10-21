@@ -30,7 +30,6 @@ class SyncWorker @AssistedInject constructor(
     }
 
     override suspend fun doWork(): Result {
-        // Ninguém logado: não há o que enviar
         val uid = auth.currentUser?.uid ?: return Result.success()
 
         return try {
@@ -38,13 +37,11 @@ class SyncWorker @AssistedInject constructor(
             Log.d(TAG, "Sincronização concluída")
             Result.success()
         } catch (e: TimeoutCancellationException) {
-            // Demorou demais (internet instável): tenta de novo
             tentarDeNovo()
         } catch (e: CancellationException) {
-            throw e   // o sistema parou a tarefa: não engolir
+            throw e
         } catch (e: FirebaseFirestoreException) {
             when (e.code) {
-                // Erros que não se resolvem tentando de novo
                 Code.PERMISSION_DENIED,
                 Code.INVALID_ARGUMENT,
                 Code.UNAUTHENTICATED -> {

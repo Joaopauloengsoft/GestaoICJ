@@ -24,8 +24,6 @@ class EstoqueRepository @Inject constructor(
         const val QTD_MAX = 1_000_000
     }
 
-    // ---------- Leituras (as telas observam estas listas) ----------
-
     fun observarEstoque(uid: String, busca: String = "") =
         produtoDao.observarEstoque(uid, busca.trim())
 
@@ -40,12 +38,8 @@ class EstoqueRepository @Inject constructor(
         fim: Long = Long.MAX_VALUE
     ) = movimentoDao.observarHistorico(uid, tipo?.name, motivo?.name, inicio, fim)
 
-    // UC03: devolve o produto se existir e estiver ativo.
-    // null = código desconhecido (ou produto excluído) -> a tela abre o cadastro
     suspend fun buscarProdutoAtivo(uid: String, codigo: String): ProdutoEntity? =
         produtoDao.buscarPorCodigo(uid, codigo.trim())?.takeIf { !it.excluido }
-
-    // ---------- UC06: cadastrar produto novo ----------
 
     suspend fun cadastrarProduto(
         uid: String,
@@ -73,8 +67,6 @@ class EstoqueRepository @Inject constructor(
             }
 
             val salvo = if (existente != null) {
-                // Produto excluído antes: reativa. Ele foi excluído com saldo zero,
-                // então a quantidade volta a ser só a inicial.
                 existente.copy(
                     nome = nome.trim(),
                     estoqueMinimo = minimo,
@@ -101,10 +93,7 @@ class EstoqueRepository @Inject constructor(
             produtoDao.salvar(salvo)
             if (qtdInicial > 0) {
                 movimentoDao.inserir(
-                    novoMovimento(
-                        uid, quem, salvo.id, TipoMovimento.ENTRADA, null,
-                        qtdInicial, agora, "Estoque inicial"
-                    )
+                    novoMovimento(uid, quem, salvo.id, TipoMovimento.ENTRADA, null, qtdInicial, agora, "Estoque inicial")
                 )
             }
             salvo
@@ -114,15 +103,12 @@ class EstoqueRepository @Inject constructor(
         produto
     }
 
-    // ---------- UC04 / UC05: entrada e saída (venda ou retirada) ----------
-    // Devolve a nova quantidade em estoque
-
     suspend fun registrarMovimento(
         uid: String,
         produtoId: String,
         tipo: TipoMovimento,
         quantidade: Int,
-        motivo: MotivoSaida? = null,          // obrigatório quando tipo = SAIDA
+        motivo: MotivoSaida? = null,
         observacao: String? = null
     ): Result<Int> = resultado {
         require(quantidade > 0) { "A quantidade deve ser maior que zero" }
@@ -148,14 +134,9 @@ class EstoqueRepository @Inject constructor(
             check(nova >= 0) { "Estoque insuficiente (disponível: ${produto.quantidade})" }
 
             val agora = System.currentTimeMillis()
-            produtoDao.salvar(
-                produto.copy(quantidade = nova, updatedAt = agora, sincronizado = false)
-            )
+            produtoDao.salvar(produto.copy(quantidade = nova, updatedAt = agora, sincronizado = false))
             movimentoDao.inserir(
-                novoMovimento(
-                    uid, quem, produto.id, tipo, motivoFinal, quantidade, agora,
-                    observacao?.trim()?.ifEmpty { null }
-                )
+                novoMovimento(uid, quem, produto.id, tipo, motivoFinal, quantidade, agora, observacao?.trim()?.ifEmpty { null })
             )
             nova
         }
@@ -163,9 +144,6 @@ class EstoqueRepository @Inject constructor(
         scheduler.agendar()
         novaQuantidade
     }
-
-    // ---------- UC12: editar e excluir (manual) ----------
-    // A quantidade NÃO é editada aqui: só muda por entrada ou saída.
 
     suspend fun editarProduto(
         uid: String,
@@ -196,8 +174,6 @@ class EstoqueRepository @Inject constructor(
         scheduler.agendar()
     }
 
-    // Exclusão lógica. Se ainda houver saldo, ele sai do estoque como RETIRADA,
-    // para que nenhuma unidade desapareça sem registro de quem fez.
     suspend fun excluirProduto(uid: String, produtoId: String): Result<Unit> = resultado {
         db.withTransaction {
             val quem = nomeDe(uid)
@@ -209,27 +185,14 @@ class EstoqueRepository @Inject constructor(
             val agora = System.currentTimeMillis()
             if (produto.quantidade > 0) {
                 movimentoDao.inserir(
-                    novoMovimento(
-                        uid, quem, produto.id, TipoMovimento.SAIDA, MotivoSaida.RETIRADA,
-                        produto.quantidade, agora, "Exclusão do produto"
-                    )
+                    novoMovimento(uid, quem, produto.id, TipoMovimento.SAIDA, MotivoSaida.RETIRADA, produto.quantidade, agora, "Exclusão do produto")
                 )
             }
-            produtoDao.salvar(
-                produto.copy(
-                    quantidade = 0,
-                    excluido = true,
-                    updatedAt = agora,
-                    sincronizado = false
-                )
-            )
+            produtoDao.salvar(produto.copy(quantidade = 0, excluido = true, updatedAt = agora, sincronizado = false))
         }
         scheduler.agendar()
     }
 
-    // ---------- Auxiliares ----------
-
-    // Nome de quem está fazendo a operação (vai para o log)
     private suspend fun nomeDe(uid: String): String =
         usuarioDao.buscarPorId(uid)?.nome ?: error("Usuário não encontrado")
 

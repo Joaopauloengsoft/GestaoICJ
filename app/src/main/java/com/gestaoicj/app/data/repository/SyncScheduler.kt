@@ -25,12 +25,10 @@ class SyncScheduler @Inject constructor(
         const val TRABALHO_PERIODICO = "sync-estoque-periodico"
     }
 
-    // Só roda com internet
     private val regras = Constraints.Builder()
         .setRequiredNetworkType(NetworkType.CONNECTED)
         .build()
 
-    // Chamado pelo EstoqueRepository depois de cada alteração
     fun agendar() {
         val pedido = OneTimeWorkRequestBuilder<SyncWorker>()
             .setConstraints(regras)
@@ -44,7 +42,6 @@ class SyncScheduler @Inject constructor(
         )
     }
 
-    // Rede de segurança: tenta enviar pendências a cada 6 horas
     fun iniciarPeriodico() {
         val pedido = PeriodicWorkRequestBuilder<SyncWorker>(6, TimeUnit.HOURS)
             .setConstraints(regras)

@@ -13,9 +13,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// Converte os dados do banco (Room) nos modelos que as telas esperam.
-// Campos que a tela tem e o banco ainda não tem ficam com um valor neutro (veja os comentários).
-
 private val PT_BR = Locale("pt", "BR")
 
 fun formatarDataHora(millis: Long): String =
@@ -31,7 +28,7 @@ fun ProdutoEntity.paraTela() = Produto(
     id = id,
     nome = nome,
     codigo = codigoBarras,
-    categoria = "Em estoque",              // o banco não tem categoria; a linha mostra "código · Em estoque"
+    categoria = "Em estoque",
     saldo = quantidade,
     unidade = unidade,
     estoqueBaixo = quantidade <= estoqueMinimo,
@@ -53,12 +50,12 @@ fun MovimentoComProduto.paraTela() = Movimentacao(
     dataHora = formatarDataHora(dataHora),
     quantidade = quantidade,
     unidade = produtoUnidade,
-    numeroVenda = null,                    // o banco não guarda número de venda
+    numeroVenda = null,
 )
 
 fun UsuarioEntity?.paraPerfil() = Perfil(
     nome = this?.nome ?: "—",
-    cargo = "—",                           // o banco só guarda nome e e-mail
+    cargo = "—",
     email = this?.email ?: "—",
     telefone = "—",
     organizacao = "—",
