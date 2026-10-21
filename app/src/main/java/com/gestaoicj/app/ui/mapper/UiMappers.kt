@@ -31,6 +31,7 @@ fun ProdutoEntity.paraTela() = Produto(
     categoria = "Em estoque",
     saldo = quantidade,
     unidade = unidade,
+    estoqueMinimo = estoqueMinimo,
     estoqueBaixo = quantidade <= estoqueMinimo,
 )
 

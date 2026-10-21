@@ -12,4 +12,8 @@ sealed class Screen(val route: String) {
         fun rota(produtoId: String) = "movimento/$produtoId"
         const val ARG = "produtoId"
     }
+    data object EditarProduto : Screen("editar_produto/{produtoId}") {
+        fun rota(produtoId: String) = "editar_produto/$produtoId"
+        const val ARG = "produtoId"
+    }
 }

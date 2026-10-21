@@ -146,4 +146,24 @@ class EstoqueViewModel @Inject constructor(
                 .onFailure { _operacaoErro.value = it.mensagemAmigavel() }
         }
     }
+
+    fun editarProduto(nome: String, minimo: Int, unidade: String) {
+        viewModelScope.launch {
+            val u = authRepo.uidAtual ?: return@launch
+            val id = _produtoSelecionado.value?.id ?: return@launch
+            repo.editarProduto(u, id, nome, minimo, unidade)
+                .onSuccess { _operacaoConcluida.tryEmit(Unit) }
+                .onFailure { _operacaoErro.value = it.mensagemAmigavel() }
+        }
+    }
+
+    fun excluirProduto() {
+        viewModelScope.launch {
+            val u = authRepo.uidAtual ?: return@launch
+            val id = _produtoSelecionado.value?.id ?: return@launch
+            repo.excluirProduto(u, id)
+                .onSuccess { _operacaoConcluida.tryEmit(Unit) }
+                .onFailure { _operacaoErro.value = it.mensagemAmigavel() }
+        }
+    }
 }

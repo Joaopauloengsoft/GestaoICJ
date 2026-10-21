@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +22,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -59,6 +61,7 @@ data class Produto(
     val categoria: String,
     val saldo: Int,
     val unidade: String,
+    val estoqueMinimo: Int = 0,
     val estoqueBaixo: Boolean = false,
 )
 
@@ -90,6 +93,7 @@ fun EstoqueScreen(
     modifier: Modifier = Modifier,
     totalCadastrados: Int = produtos.size,
     onProdutoClick: (Produto) -> Unit = {},
+    onEditarProduto: (Produto) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -116,6 +120,7 @@ fun EstoqueScreen(
                     produtos = produtos,
                     totalCadastrados = totalCadastrados,
                     onProdutoClick = onProdutoClick,
+                    onEditarProduto = onEditarProduto,
                     modifier = Modifier.weight(1f, fill = false),
                 )
             }
@@ -232,6 +237,7 @@ private fun ListaDeProdutos(
     produtos: List<Produto>,
     totalCadastrados: Int,
     onProdutoClick: (Produto) -> Unit,
+    onEditarProduto: (Produto) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val forma = MaterialTheme.shapes.medium
@@ -268,6 +274,7 @@ private fun ListaDeProdutos(
                     produto = produto,
                     ultimo = indice == produtos.lastIndex,
                     onClick = { onProdutoClick(produto) },
+                    onEditarClick = { onEditarProduto(produto) },
                 )
             }
         }
@@ -281,62 +288,76 @@ private fun ListaDeProdutos(
  * @param ultimo Indica se este item é o último da lista para controlar a exibição da linha divisória.
  */
 @Composable
-private fun LinhaDeProduto(produto: Produto, ultimo: Boolean, onClick: () -> Unit) {
+private fun LinhaDeProduto(produto: Produto, ultimo: Boolean, onClick: () -> Unit, onEditarClick: () -> Unit) {
     val cores = MaterialTheme.colorScheme
-    // "Estoque baixo" usa o amarelo como TEXTO: no claro vira âmbar escuro (legível).
     val destaque = if (produto.estoqueBaixo) MaterialTheme.extraColors.accent else null
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(72.dp)
-            .clickable(role = Role.Button, onClick = onClick),
-    ) {
+    Box(modifier = Modifier.fillMaxWidth().height(72.dp)) {
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clickable(role = Role.Button, onClick = onClick)
+                    .padding(start = 16.dp, end = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = produto.nome,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = cores.onBackground,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = "${produto.codigo} · ${if (produto.estoqueBaixo) "Estoque baixo" else produto.categoria}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = destaque ?: cores.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = produto.nome,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = cores.onBackground,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = "${produto.codigo} · ${if (produto.estoqueBaixo) "Estoque baixo" else produto.categoria}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = destaque ?: cores.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Column(
+                    modifier = Modifier.widthIn(min = 56.dp),
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
+                    Text(
+                        text = produto.saldo.toString(),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = destaque ?: cores.onBackground,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = produto.unidade,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = cores.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
-            // 62dp no design; widthIn deixa crescer se o saldo tiver mais dígitos.
-            Column(
-                modifier = Modifier.widthIn(min = 62.dp),
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(3.dp),
+
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable(role = Role.Button, onClick = onEditarClick),
+                contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = produto.saldo.toString(),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = destaque ?: cores.onBackground,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = produto.unidade,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = cores.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = "Editar produto",
+                    tint = cores.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
