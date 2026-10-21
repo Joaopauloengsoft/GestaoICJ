@@ -38,6 +38,17 @@ class AuthViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    fun cadastrar(nome: String, email: String, senha: String) {
+        if (_state.value.carregando) return
+        _state.update { it.copy(carregando = true, erro = null) }
+        viewModelScope.launch {
+            repo.cadastrar(nome, email, senha).fold(
+                onSuccess = { _state.update { it.copy(carregando = false, logado = true, erro = null) } },
+                onFailure = { exception -> _state.update { it.copy(carregando = false, erro = exception.mensagemAmigavel()) } }
+            )
+        }
+    }
+
     fun entrar(email: String, senha: String) {
         if (_state.value.carregando) return
         _state.update { it.copy(carregando = true, erro = null) }

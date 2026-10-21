@@ -14,20 +14,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.gestaoicj.app.auth.AuthViewModel
+import com.gestaoicj.app.ui.cadastro.CadastroContaScreen
 import com.gestaoicj.app.ui.estoque.EstoqueScreen
 import com.gestaoicj.app.ui.estoque.EstoqueViewModel
 import com.gestaoicj.app.ui.historico.HistoricoEstoqueScreen
 import com.gestaoicj.app.ui.login.LoginScreen
 import com.gestaoicj.app.ui.mapper.paraPerfil
+import com.gestaoicj.app.ui.movimento.MovimentoScreen
 import com.gestaoicj.app.ui.perfil.MeusDadosScreen
+import com.gestaoicj.app.ui.produto.CadastroProdutoScreen
 import com.gestaoicj.app.ui.reposicao.ReposicaoScreen
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNav(
@@ -95,9 +100,22 @@ fun AppNav(
                     onPrivacy = {},
                     onTerms = {},
                     erro = auth.erro,
-                    carregando = auth.carregando
+                    carregando = auth.carregando,
+                    onCadastrar = { nav.navigate(Screen.CadastroConta.route) }
                 )
 
+                LaunchedEffect(auth.logado) {
+                    if (auth.logado) goToEstoque(nav)
+                }
+            }
+
+            composable(Screen.CadastroConta.route) {
+                CadastroContaScreen(
+                    carregando = auth.carregando,
+                    erro = auth.erro,
+                    onCadastrar = { nome, email, senha -> authVm.cadastrar(nome, email, senha) },
+                    onVoltar = { nav.navigateUp() }
+                )
                 LaunchedEffect(auth.logado) {
                     if (auth.logado) goToEstoque(nav)
                 }
@@ -111,9 +129,54 @@ fun AppNav(
                     produtos = produtos,
                     busca = busca,
                     onBuscaChange = estoqueVm::onBuscaChange,
-                    onAdicionarProduto = {},
-                    totalCadastrados = total
+                    onAdicionarProduto = { nav.navigate(Screen.CadastroProduto.route) },
+                    totalCadastrados = total,
+                    onProdutoClick = { produto ->
+                        estoqueVm.selecionarProduto(produto)
+                        nav.navigate(Screen.Movimento.rota(produto.id))
+                    }
                 )
+            }
+
+            composable(Screen.CadastroProduto.route) {
+                val erro by estoqueVm.operacaoErro.collectAsStateWithLifecycle()
+                CadastroProdutoScreen(
+                    carregando = false,
+                    erro = erro,
+                    onSalvar = { codigo, nome, qtd, minimo, unidade ->
+                        estoqueVm.limparErroOperacao()
+                        estoqueVm.cadastrarProduto(codigo, nome, qtd, minimo, unidade)
+                    },
+                    onVoltar = { nav.navigateUp() }
+                )
+                LaunchedEffect(Unit) {
+                    estoqueVm.operacaoConcluida.collect { nav.navigateUp() }
+                }
+            }
+
+            composable(
+                route = Screen.Movimento.route,
+                arguments = listOf(navArgument(Screen.Movimento.ARG) { type = NavType.StringType })
+            ) {
+                val produto by estoqueVm.produtoSelecionado.collectAsStateWithLifecycle()
+                val erro by estoqueVm.operacaoErro.collectAsStateWithLifecycle()
+                MovimentoScreen(
+                    produto = produto,
+                    carregando = false,
+                    erro = erro,
+                    onEntrada = { qtd ->
+                        estoqueVm.limparErroOperacao()
+                        estoqueVm.registrarEntrada(qtd)
+                    },
+                    onSaida = { qtd, motivo ->
+                        estoqueVm.limparErroOperacao()
+                        estoqueVm.registrarSaida(qtd, motivo)
+                    },
+                    onVoltar = { nav.navigateUp() }
+                )
+                LaunchedEffect(Unit) {
+                    estoqueVm.operacaoConcluida.collect { nav.navigateUp() }
+                }
             }
 
             composable(Screen.Reposicao.route) {

@@ -3,10 +3,12 @@ package com.gestaoicj.app.ui.estoque
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gestaoicj.app.data.local.dao.MovimentoComProduto
+import com.gestaoicj.app.data.local.entity.MotivoSaida
 import com.gestaoicj.app.data.local.entity.ProdutoEntity
 import com.gestaoicj.app.data.local.entity.TipoMovimento
 import com.gestaoicj.app.data.repository.AuthRepository
 import com.gestaoicj.app.data.repository.EstoqueRepository
+import com.gestaoicj.app.data.repository.mensagemAmigavel
 import com.gestaoicj.app.ui.historico.FiltroMovimentacao
 import com.gestaoicj.app.ui.historico.Movimentacao
 import com.gestaoicj.app.ui.mapper.formatarDia
@@ -17,7 +19,10 @@ import com.gestaoicj.app.ui.reposicao.ProdutoParaRepor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -30,7 +35,7 @@ import javax.inject.Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class EstoqueViewModel @Inject constructor(
-    authRepo: AuthRepository,
+    private val authRepo: AuthRepository,
     private val repo: EstoqueRepository,
 ) : ViewModel() {
 
@@ -99,4 +104,46 @@ class EstoqueViewModel @Inject constructor(
             }
             .map { lista -> lista.map { it.paraTela() } }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val _operacaoErro = MutableStateFlow<String?>(null)
+    val operacaoErro: StateFlow<String?> = _operacaoErro
+
+    private val _operacaoConcluida = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val operacaoConcluida: SharedFlow<Unit> = _operacaoConcluida
+
+    fun limparErroOperacao() { _operacaoErro.value = null }
+
+    private val _produtoSelecionado = MutableStateFlow<Produto?>(null)
+    val produtoSelecionado: StateFlow<Produto?> = _produtoSelecionado
+
+    fun selecionarProduto(produto: Produto) { _produtoSelecionado.value = produto }
+
+    fun cadastrarProduto(codigo: String, nome: String, qtdInicial: Int, minimo: Int, unidade: String) {
+        viewModelScope.launch {
+            val u = authRepo.uidAtual ?: return@launch
+            repo.cadastrarProduto(u, codigo, nome, qtdInicial, minimo, unidade)
+                .onSuccess { _operacaoConcluida.tryEmit(Unit) }
+                .onFailure { _operacaoErro.value = it.mensagemAmigavel() }
+        }
+    }
+
+    fun registrarEntrada(quantidade: Int) {
+        viewModelScope.launch {
+            val u = authRepo.uidAtual ?: return@launch
+            val id = _produtoSelecionado.value?.id ?: return@launch
+            repo.registrarMovimento(u, id, TipoMovimento.ENTRADA, quantidade)
+                .onSuccess { _operacaoConcluida.tryEmit(Unit) }
+                .onFailure { _operacaoErro.value = it.mensagemAmigavel() }
+        }
+    }
+
+    fun registrarSaida(quantidade: Int, motivo: MotivoSaida) {
+        viewModelScope.launch {
+            val u = authRepo.uidAtual ?: return@launch
+            val id = _produtoSelecionado.value?.id ?: return@launch
+            repo.registrarMovimento(u, id, TipoMovimento.SAIDA, quantidade, motivo)
+                .onSuccess { _operacaoConcluida.tryEmit(Unit) }
+                .onFailure { _operacaoErro.value = it.mensagemAmigavel() }
+        }
+    }
 }

@@ -89,6 +89,7 @@ fun EstoqueScreen(
     onAdicionarProduto: () -> Unit,
     modifier: Modifier = Modifier,
     totalCadastrados: Int = produtos.size,
+    onProdutoClick: (Produto) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -114,6 +115,7 @@ fun EstoqueScreen(
                 ListaDeProdutos(
                     produtos = produtos,
                     totalCadastrados = totalCadastrados,
+                    onProdutoClick = onProdutoClick,
                     modifier = Modifier.weight(1f, fill = false),
                 )
             }
@@ -229,6 +231,7 @@ private fun CampoBusca(valor: String, onValorChange: (String) -> Unit) {
 private fun ListaDeProdutos(
     produtos: List<Produto>,
     totalCadastrados: Int,
+    onProdutoClick: (Produto) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val forma = MaterialTheme.shapes.medium
@@ -261,7 +264,11 @@ private fun ListaDeProdutos(
                 .border(1.dp, cores.outline, forma),
         ) {
             itemsIndexed(produtos, key = { _, produto -> produto.id }) { indice, produto ->
-                LinhaDeProduto(produto, ultimo = indice == produtos.lastIndex)
+                LinhaDeProduto(
+                    produto = produto,
+                    ultimo = indice == produtos.lastIndex,
+                    onClick = { onProdutoClick(produto) },
+                )
             }
         }
     }
@@ -274,7 +281,7 @@ private fun ListaDeProdutos(
  * @param ultimo Indica se este item é o último da lista para controlar a exibição da linha divisória.
  */
 @Composable
-private fun LinhaDeProduto(produto: Produto, ultimo: Boolean) {
+private fun LinhaDeProduto(produto: Produto, ultimo: Boolean, onClick: () -> Unit) {
     val cores = MaterialTheme.colorScheme
     // "Estoque baixo" usa o amarelo como TEXTO: no claro vira âmbar escuro (legível).
     val destaque = if (produto.estoqueBaixo) MaterialTheme.extraColors.accent else null
@@ -282,7 +289,8 @@ private fun LinhaDeProduto(produto: Produto, ultimo: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp),
+            .height(72.dp)
+            .clickable(role = Role.Button, onClick = onClick),
     ) {
         Row(
             modifier = Modifier

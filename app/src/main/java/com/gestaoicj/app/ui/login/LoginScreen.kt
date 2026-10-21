@@ -88,6 +88,7 @@ fun LoginScreen(
     modifier: Modifier = Modifier,
     erro: String? = null,
     carregando: Boolean = false,
+    onCadastrar: () -> Unit = {},
 ) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -206,6 +207,28 @@ fun LoginScreen(
                                     carregando = carregando,
                                     onClick = { onLogin(email, password, remember) },
                                 )
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center,
+                                ) {
+                                    Text(
+                                        text = "Não tem conta? ",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        text = "Criar conta",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            fontWeight = FontWeight.Medium
+                                        ),
+                                        color = MaterialTheme.extraColors.accent,
+                                        modifier = Modifier.clickable(
+                                            role = Role.Button,
+                                            onClick = onCadastrar,
+                                        ),
+                                    )
+                                }
                             }
 
                             AccessHelp(onHelp = onHelp)
