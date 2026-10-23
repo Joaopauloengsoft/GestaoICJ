@@ -25,6 +25,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,7 +41,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material3.Icon
 import com.gestaoicj.app.ui.components.CampoFormulario
 import com.gestaoicj.app.ui.components.RodapeCopyright
 import com.gestaoicj.app.ui.components.SimboloIcj
@@ -53,8 +57,14 @@ fun CadastroProdutoScreen(
     onSalvar: (codigo: String, nome: String, qtdInicial: Int, minimo: Int, unidade: String) -> Unit,
     onVoltar: () -> Unit,
     modifier: Modifier = Modifier,
+    codigoExterno: String = "",
+    onEscanear: () -> Unit = {},
 ) {
-    var codigo by rememberSaveable { mutableStateOf("") }
+    var codigo by rememberSaveable { mutableStateOf(codigoExterno) }
+
+    LaunchedEffect(codigoExterno) {
+        if (codigoExterno.isNotBlank()) codigo = codigoExterno
+    }
     var nome by rememberSaveable { mutableStateOf("") }
     var qtdInicial by rememberSaveable { mutableStateOf("") }
     var minimo by rememberSaveable { mutableStateOf("") }
@@ -89,20 +99,43 @@ fun CadastroProdutoScreen(
                     Cabecalho()
 
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        CampoFormulario(
-                            rotulo = "Código de barras",
-                            valor = codigo,
-                            onValorChange = { codigo = it },
-                            placeholder = "EAN-13 ou código interno",
-                            leadingIcon = Icons.Outlined.QrCode,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Next,
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onNext = { focusManager.moveFocus(FocusDirection.Down) },
-                            ),
-                        )
+                        val cores = MaterialTheme.colorScheme
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.Bottom,
+                        ) {
+                            CampoFormulario(
+                                rotulo = "Código de barras",
+                                valor = codigo,
+                                onValorChange = { codigo = it },
+                                placeholder = "EAN-13 ou código interno",
+                                leadingIcon = Icons.Outlined.QrCode,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number,
+                                    imeAction = ImeAction.Next,
+                                ),
+                                keyboardActions = KeyboardActions(
+                                    onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                                ),
+                                modifier = Modifier.weight(1f),
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .clip(MaterialTheme.shapes.medium)
+                                    .background(cores.surfaceVariant)
+                                    .border(1.dp, cores.outline, MaterialTheme.shapes.medium)
+                                    .clickable(role = Role.Button, onClick = onEscanear),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.CameraAlt,
+                                    contentDescription = "Escanear código",
+                                    tint = cores.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        }
 
                         CampoFormulario(
                             rotulo = "Nome do produto",

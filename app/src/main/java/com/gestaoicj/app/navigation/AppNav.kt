@@ -31,6 +31,8 @@ import com.gestaoicj.app.ui.mapper.paraPerfil
 import com.gestaoicj.app.ui.movimento.MovimentoScreen
 import com.gestaoicj.app.ui.perfil.MeusDadosScreen
 import com.gestaoicj.app.ui.produto.CadastroProdutoScreen
+import com.gestaoicj.app.ui.produto.EditarProdutoScreen
+import com.gestaoicj.app.ui.scanner.ScannerScreen
 import com.gestaoicj.app.ui.reposicao.ReposicaoScreen
 import kotlinx.coroutines.launch
 
@@ -138,11 +140,16 @@ fun AppNav(
                 )
             }
 
-            composable(Screen.CadastroProduto.route) {
+            composable(Screen.CadastroProduto.route) { backStackEntry ->
+                val codigoEscaneado by backStackEntry.savedStateHandle
+                    .getStateFlow("barcode", "")
+                    .collectAsStateWithLifecycle()
                 val erro by estoqueVm.operacaoErro.collectAsStateWithLifecycle()
                 CadastroProdutoScreen(
                     carregando = false,
                     erro = erro,
+                    codigoExterno = codigoEscaneado,
+                    onEscanear = { nav.navigate(Screen.Scanner.route) },
                     onSalvar = { codigo, nome, qtd, minimo, unidade ->
                         estoqueVm.limparErroOperacao()
                         estoqueVm.cadastrarProduto(codigo, nome, qtd, minimo, unidade)
@@ -152,6 +159,16 @@ fun AppNav(
                 LaunchedEffect(Unit) {
                     estoqueVm.operacaoConcluida.collect { nav.navigateUp() }
                 }
+            }
+
+            composable(Screen.Scanner.route) {
+                ScannerScreen(
+                    onBarcodeDetected = { codigo ->
+                        nav.previousBackStackEntry?.savedStateHandle?.set("barcode", codigo)
+                        nav.navigateUp()
+                    },
+                    onVoltar = { nav.navigateUp() },
+                )
             }
 
             composable(
