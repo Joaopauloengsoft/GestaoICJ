@@ -43,17 +43,6 @@ import com.gestaoicj.app.ui.components.SimboloIcj
 import com.gestaoicj.app.ui.theme.GestaoIcjTheme
 import com.gestaoicj.app.ui.theme.extraColors
 
-/**
- * Modelo de dados que representa um produto do estoque.
- *
- * @property id Identificador único do produto.
- * @property nome Nome descritivo do produto.
- * @property codigo Código ou SKU para identificação no estoque (ex: "ICJ-001").
- * @property categoria Categoria do produto (ex: "Papelaria", "Copa").
- * @property saldo Quantidade disponível em estoque.
- * @property unidade Unidade de medida (ex: "unidades", "resmas", "pacotes").
- * @property estoqueBaixo Indica se o saldo do produto está abaixo do limite mínimo recomendado.
- */
 data class Produto(
     val id: String,
     val nome: String,
@@ -65,31 +54,12 @@ data class Produto(
     val estoqueBaixo: Boolean = false,
 )
 
-/**
- * Tela principal de Gestão de Estoque do aplicativo ICJ.
- *
- * Exibe o cabeçalho com a marca, campo de busca de produtos, listagem dinâmica dos itens cadastrados
- * com status de saldo e botão para adição/escaneamento de novos produtos no rodapé.
- *
- * É "stateless": só desenha o que recebe e avisa o que o usuário fez (state hoisting).
- * Quem guarda e observa o estado é o `EstoqueViewModel`, ligado em `AppNav`.
- *
- * Cores, fontes e cantos vêm todos do tema (`MaterialTheme`), então a tela
- * acompanha o modo claro/escuro sem nenhum `if` aqui dentro.
- *
- * @param produtos Lista de produtos a serem exibidos (geralmente filtrada pela busca no ViewModel).
- * @param busca Texto atual do campo de pesquisa de produtos.
- * @param onBuscaChange Callback acionado quando o texto da busca é alterado pelo usuário.
- * @param onAdicionarProduto Callback acionado ao clicar no botão de adicionar produto.
- * @param modifier Modificador de layout aplicado ao contêiner principal da tela.
- * @param totalCadastrados Quantidade total de produtos cadastrados para exibição no contador.
- */
 @Composable
 fun EstoqueScreen(
     produtos: List<Produto>,
     busca: String,
     onBuscaChange: (String) -> Unit,
-    onAdicionarProduto: () -> Unit,
+    onEscanear: () -> Unit,
     modifier: Modifier = Modifier,
     totalCadastrados: Int = produtos.size,
     onProdutoClick: (Produto) -> Unit = {},
@@ -126,15 +96,10 @@ fun EstoqueScreen(
             }
         }
 
-        Rodape(onAdicionarProduto)
+        Rodape(onEscanear)
     }
 }
 
-// ───────────────────────── Cabeçalho ─────────────────────────
-
-/**
- * Cabeçalho da tela de estoque contendo o símbolo da ICJ, o título da seção e uma breve instrução.
- */
 @Composable
 private fun Cabecalho() {
     Row(
@@ -161,14 +126,6 @@ private fun Cabecalho() {
     }
 }
 
-// ───────────────────────── Busca ─────────────────────────
-
-/**
- * Campo de entrada de texto estilizado para filtragem de produtos por nome ou código.
- *
- * @param valor Texto atualmente digitado no campo de busca.
- * @param onValorChange Callback acionado sempre que o valor do campo for modificado.
- */
 @Composable
 private fun CampoBusca(valor: String, onValorChange: (String) -> Unit) {
     val forma = MaterialTheme.shapes.medium
@@ -223,15 +180,6 @@ private fun CampoBusca(valor: String, onValorChange: (String) -> Unit) {
     }
 }
 
-// ───────────────────────── Lista ─────────────────────────
-
-/**
- * Seção de listagem dos produtos cadastrados no estoque. Exibe o contador total e a lista rolável.
- *
- * @param produtos Lista dos produtos a serem renderizados.
- * @param totalCadastrados Número total de produtos cadastrados no sistema.
- * @param modifier Modificador opcional para customização de layout.
- */
 @Composable
 private fun ListaDeProdutos(
     produtos: List<Produto>,
@@ -261,7 +209,6 @@ private fun ListaDeProdutos(
             )
         }
 
-        // A lista rola sozinha quando há mais produtos do que cabe na tela.
         LazyColumn(
             modifier = Modifier
                 .weight(1f, fill = false)
@@ -281,12 +228,6 @@ private fun ListaDeProdutos(
     }
 }
 
-/**
- * Item individual da lista que apresenta as informações detalhadas de um [produto].
- *
- * @param produto Dados do produto a ser exibido nesta linha.
- * @param ultimo Indica se este item é o último da lista para controlar a exibição da linha divisória.
- */
 @Composable
 private fun LinhaDeProduto(produto: Produto, ultimo: Boolean, onClick: () -> Unit, onEditarClick: () -> Unit) {
     val cores = MaterialTheme.colorScheme
@@ -374,15 +315,8 @@ private fun LinhaDeProduto(produto: Produto, ultimo: Boolean, onClick: () -> Uni
     }
 }
 
-// ───────────────────────── Rodapé ─────────────────────────
-
-/**
- * Rodapé da tela contendo a ação de adicionar produto via scanner e informações de copyright.
- *
- * @param onAdicionarProduto Action executada ao clicar no botão de adicionar/escanear produto.
- */
 @Composable
-private fun Rodape(onAdicionarProduto: () -> Unit) {
+private fun Rodape(onEscanear: () -> Unit) {
     val cores = MaterialTheme.colorScheme
 
     Column(
@@ -396,12 +330,12 @@ private fun Rodape(onAdicionarProduto: () -> Unit) {
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Adicionar produto",
+                    text = "Escanear produto",
                     style = MaterialTheme.typography.titleSmall,
                     color = cores.onBackground,
                 )
                 Text(
-                    text = "Escaneie o código de barras",
+                    text = "Entrada, saída ou novo cadastro",
                     style = MaterialTheme.typography.bodySmall,
                     color = cores.onSurfaceVariant,
                 )
@@ -411,12 +345,12 @@ private fun Rodape(onAdicionarProduto: () -> Unit) {
                     .size(56.dp)
                     .clip(MaterialTheme.shapes.medium)
                     .background(cores.primary)
-                    .clickable(role = Role.Button, onClick = onAdicionarProduto),
+                    .clickable(role = Role.Button, onClick = onEscanear),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Add,
-                    contentDescription = "Adicionar produto escaneando o código de barras",
+                    contentDescription = "Escanear código de barras",
                     tint = cores.onPrimary,
                     modifier = Modifier.size(26.dp),
                 )
@@ -433,8 +367,6 @@ private fun Rodape(onAdicionarProduto: () -> Unit) {
     }
 }
 
-// ───────────────────────── Previews ─────────────────────────
-
 private val produtosDeExemplo = listOf(
     Produto("1", "Papel A4", "ICJ-001", "Papelaria", 24, "resmas"),
     Produto("2", "Caneta esferográfica", "ICJ-002", "Papelaria", 120, "unidades"),
@@ -450,17 +382,15 @@ private fun EstoqueScreenPreview(darkTheme: Boolean) {
             produtos = produtosDeExemplo,
             busca = "",
             onBuscaChange = {},
-            onAdicionarProduto = {},
+            onEscanear = {},
         )
     }
 }
 
-/** Preview da tela [EstoqueScreen] no tema escuro (o design original do Figma). */
 @Preview(name = "Escuro", widthDp = 390, heightDp = 844, showBackground = true)
 @Composable
 private fun EstoqueScreenEscuroPreview() = EstoqueScreenPreview(darkTheme = true)
 
-/** Preview da tela [EstoqueScreen] no tema claro. */
 @Preview(name = "Claro", widthDp = 390, heightDp = 844, showBackground = true)
 @Composable
 private fun EstoqueScreenClaroPreview() = EstoqueScreenPreview(darkTheme = false)

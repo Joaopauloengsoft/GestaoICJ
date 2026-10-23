@@ -131,7 +131,7 @@ fun AppNav(
                     produtos = produtos,
                     busca = busca,
                     onBuscaChange = estoqueVm::onBuscaChange,
-                    onAdicionarProduto = { nav.navigate(Screen.CadastroProduto.route) },
+                    onEscanear = { nav.navigate(Screen.ScannerMovimento.route) },
                     totalCadastrados = total,
                     onProdutoClick = { produto ->
                         estoqueVm.selecionarProduto(produto)
@@ -148,20 +148,27 @@ fun AppNav(
                 val codigoEscaneado by backStackEntry.savedStateHandle
                     .getStateFlow("barcode", "")
                     .collectAsStateWithLifecycle()
+                val codigoInicial by estoqueVm.codigoInicialParaCadastro.collectAsStateWithLifecycle()
                 val erro by estoqueVm.operacaoErro.collectAsStateWithLifecycle()
                 CadastroProdutoScreen(
                     carregando = false,
                     erro = erro,
-                    codigoExterno = codigoEscaneado,
+                    codigoExterno = codigoInicial.ifEmpty { codigoEscaneado },
                     onEscanear = { nav.navigate(Screen.Scanner.route) },
                     onSalvar = { codigo, nome, qtd, minimo, unidade ->
                         estoqueVm.limparErroOperacao()
                         estoqueVm.cadastrarProduto(codigo, nome, qtd, minimo, unidade)
                     },
-                    onVoltar = { nav.navigateUp() }
+                    onVoltar = {
+                        estoqueVm.limparCodigoInicialParaCadastro()
+                        nav.navigateUp()
+                    }
                 )
                 LaunchedEffect(Unit) {
-                    estoqueVm.operacaoConcluida.collect { nav.navigateUp() }
+                    estoqueVm.operacaoConcluida.collect {
+                        estoqueVm.limparCodigoInicialParaCadastro()
+                        nav.navigateUp()
+                    }
                 }
             }
 
@@ -172,6 +179,34 @@ fun AppNav(
                         nav.navigateUp()
                     },
                     onVoltar = { nav.navigateUp() },
+                )
+            }
+
+            composable(Screen.ScannerMovimento.route) {
+                val resultadoScan by estoqueVm.resultadoScan.collectAsStateWithLifecycle()
+                LaunchedEffect(resultadoScan) {
+                    val resultado = resultadoScan ?: return@LaunchedEffect
+                    estoqueVm.limparResultadoScan()
+                    when (resultado) {
+                        is EstoqueViewModel.ResultadoScan.ProdutoEncontrado -> {
+                            nav.navigate(Screen.Movimento.rota(resultado.produto.id)) {
+                                popUpTo(Screen.ScannerMovimento.route) { inclusive = true }
+                            }
+                        }
+                        is EstoqueViewModel.ResultadoScan.ProdutoNaoEncontrado -> {
+                            estoqueVm.definirCodigoInicialParaCadastro(resultado.codigo)
+                            nav.navigate(Screen.CadastroProduto.route) {
+                                popUpTo(Screen.ScannerMovimento.route) { inclusive = true }
+                            }
+                        }
+                    }
+                }
+                ScannerScreen(
+                    onBarcodeDetected = { codigo -> estoqueVm.buscarProdutoPorCodigo(codigo) },
+                    onVoltar = {
+                        estoqueVm.limparResultadoScan()
+                        nav.navigateUp()
+                    },
                 )
             }
 

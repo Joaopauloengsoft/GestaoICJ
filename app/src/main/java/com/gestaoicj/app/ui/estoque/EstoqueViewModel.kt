@@ -166,4 +166,33 @@ class EstoqueViewModel @Inject constructor(
                 .onFailure { _operacaoErro.value = it.mensagemAmigavel() }
         }
     }
+
+    sealed interface ResultadoScan {
+        data class ProdutoEncontrado(val produto: Produto) : ResultadoScan
+        data class ProdutoNaoEncontrado(val codigo: String) : ResultadoScan
+    }
+
+    private val _resultadoScan = MutableStateFlow<ResultadoScan?>(null)
+    val resultadoScan: StateFlow<ResultadoScan?> = _resultadoScan
+
+    fun limparResultadoScan() { _resultadoScan.value = null }
+
+    private val _codigoInicialParaCadastro = MutableStateFlow("")
+    val codigoInicialParaCadastro: StateFlow<String> = _codigoInicialParaCadastro
+
+    fun definirCodigoInicialParaCadastro(codigo: String) { _codigoInicialParaCadastro.value = codigo }
+    fun limparCodigoInicialParaCadastro() { _codigoInicialParaCadastro.value = "" }
+
+    fun buscarProdutoPorCodigo(codigo: String) {
+        viewModelScope.launch {
+            val u = authRepo.uidAtual ?: return@launch
+            val entidade = repo.buscarProdutoAtivo(u, codigo)
+            if (entidade != null) {
+                selecionarProduto(entidade.paraTela())
+                _resultadoScan.value = ResultadoScan.ProdutoEncontrado(entidade.paraTela())
+            } else {
+                _resultadoScan.value = ResultadoScan.ProdutoNaoEncontrado(codigo)
+            }
+        }
+    }
 }

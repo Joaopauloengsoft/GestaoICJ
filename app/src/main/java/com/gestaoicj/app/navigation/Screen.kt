@@ -17,4 +17,5 @@ sealed class Screen(val route: String) {
         const val ARG = "produtoId"
     }
     data object Scanner : Screen("scanner")
+    data object ScannerMovimento : Screen("scanner_movimento")
 }
