@@ -136,6 +136,10 @@ fun AppNav(
                     onProdutoClick = { produto ->
                         estoqueVm.selecionarProduto(produto)
                         nav.navigate(Screen.Movimento.rota(produto.id))
+                    },
+                    onEditarProduto = { produto ->
+                        estoqueVm.selecionarProduto(produto)
+                        nav.navigate(Screen.EditarProduto.rota(produto.id))
                     }
                 )
             }
@@ -188,6 +192,31 @@ fun AppNav(
                     onSaida = { qtd, motivo ->
                         estoqueVm.limparErroOperacao()
                         estoqueVm.registrarSaida(qtd, motivo)
+                    },
+                    onVoltar = { nav.navigateUp() }
+                )
+                LaunchedEffect(Unit) {
+                    estoqueVm.operacaoConcluida.collect { nav.navigateUp() }
+                }
+            }
+
+            composable(
+                route = Screen.EditarProduto.route,
+                arguments = listOf(navArgument(Screen.EditarProduto.ARG) { type = NavType.StringType })
+            ) {
+                val produto by estoqueVm.produtoSelecionado.collectAsStateWithLifecycle()
+                val erro by estoqueVm.operacaoErro.collectAsStateWithLifecycle()
+                EditarProdutoScreen(
+                    produto = produto,
+                    carregando = false,
+                    erro = erro,
+                    onSalvar = { nome, minimo, unidade ->
+                        estoqueVm.limparErroOperacao()
+                        estoqueVm.editarProduto(nome, minimo, unidade)
+                    },
+                    onExcluir = {
+                        estoqueVm.limparErroOperacao()
+                        estoqueVm.excluirProduto()
                     },
                     onVoltar = { nav.navigateUp() }
                 )
